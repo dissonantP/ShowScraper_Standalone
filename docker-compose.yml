@@ -58,5 +58,6 @@ services:
 
     # Keep container running
     restart: unless-stopped
-    
-    # To enable cron, override with: docker-compose run --rm scraper cron
+
+    # Default: runs cron (see Dockerfile CMD)
+    # Override to run once: docker-compose run --rm scraper bin/run_scraper

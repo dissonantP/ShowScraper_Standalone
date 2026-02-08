@@ -46,6 +46,5 @@ ENV RESCUE_SCRAPING_ERRORS=true
 # Create directories for volumes
 RUN mkdir -p credentials logs
 
-# Set entrypoint and default command
-ENTRYPOINT ["/app/bin/entrypoint.sh"]
-CMD ["sleep", "infinity"]
+# Default: run cron in foreground
+CMD ["cron", "-f"]

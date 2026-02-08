@@ -73,7 +73,7 @@ This Docker container includes:
 
 3. **Run setup**:
    ```bash
-   bash setup.sh  # Creates .env, handles credentials
+   bash devcontainer_setup.sh
    ```
 
 4. **Start the scraper**:
