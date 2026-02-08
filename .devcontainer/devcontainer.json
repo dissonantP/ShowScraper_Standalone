@@ -14,6 +14,9 @@
       }
     }
   },
+  "containerEnv": {
+    "STORAGE_CREDENTIALS": "/app/credentials/showscraper.json"
+  },
   "remoteEnv": {
     "CODESPACES": "true"
   },

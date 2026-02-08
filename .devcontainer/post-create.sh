@@ -27,8 +27,8 @@ if [ ! -z "$STORAGE_CREDENTIALS_JSON" ]; then
   mkdir -p /app/credentials
   echo "$STORAGE_CREDENTIALS_JSON" > /app/credentials/showscraper.json
   chmod 600 /app/credentials/showscraper.json
-  export STORAGE_CREDENTIALS=/app/credentials/showscraper.json
-  echo "✓ Credentials JSON written from environment variable"
+  echo "✓ Credentials JSON written to /app/credentials/showscraper.json"
+  echo "✓ STORAGE_CREDENTIALS env var set via devcontainer.json"
 fi
 
 echo "✓ Setup complete"
