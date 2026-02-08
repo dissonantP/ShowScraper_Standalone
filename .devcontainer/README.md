@@ -2,54 +2,100 @@
 
 This directory contains configuration for GitHub Codespaces and local development containers.
 
+## Architecture
+
+**Simplified Docker-in-Docker approach:**
+- Devcontainer uses standard Ubuntu base image with Docker-in-Docker feature
+- You run `docker-compose` inside the devcontainer to start the scraper
+- No duplication of Dockerfiles - single production Dockerfile in root
+
 ## Key Files
 
-- **Dockerfile**: Development-specific Docker image with full dev tools (git, vim, etc.)
-- **docker-compose.dev.yml**: Development Docker Compose configuration with workspace mounted
-- **devcontainer.json**: VS Code devcontainer configuration
-- **post-create.sh**: Post-creation setup script for credentials
+- **devcontainer.json**: VS Code devcontainer configuration with Docker-in-Docker
+- **post-create.sh**: Sets up credentials and environment on first launch
+- **verify-setup.sh**: Diagnostic script to check your setup
 
-## Development vs Production
+## How It Works
 
-### Development (this setup)
-- Based on full `ruby:3.3` image (not slim)
-- Includes git, vim, curl, and other dev tools
-- Mounts workspace as volume (changes reflected immediately)
-- Builds from local Dockerfile
+1. **Devcontainer boots** with Ubuntu + Docker + Ruby + Git
+2. **Post-create script runs** and:
+   - Creates `.env` from `.env.example` if needed
+   - Writes credentials from `STORAGE_CREDENTIALS_JSON` secret
+   - Adds `STORAGE_CREDENTIALS` to your shell environment
+3. **You run docker-compose** inside the devcontainer:
+   ```bash
+   docker-compose up -d
+   docker-compose exec scraper bin/run_scraper
+   ```
 
-### Production (root Dockerfile)
-- Based on minimal `ruby:3.3-slim` image
-- Only includes runtime dependencies
-- Copies code into image (immutable)
-- Published to GitHub Container Registry via Actions
-- Used by docker-compose.yml in root
+## Environment Variables
 
-## GitHub Actions Workflow
+Configure these as **Codespaces secrets** (repo or user level):
+- `STORAGE_CREDENTIALS_JSON` - Full JSON content of GCS credentials
+- `STORAGE_PROJECT` - GCP project ID
+- `GCS_BUCKET` - Production GCS bucket name
+- `GCS_TEST_BUCKET` - Test GCS bucket name (optional)
+- `NO_GCS` - Set to "true" to disable GCS (optional)
 
-The `.github/workflows/docker-build.yml` automatically builds and publishes the **production** image on:
-- Push to `main` or `master` branches
-- Manual workflow dispatch
-
-The production image is tagged as `ghcr.io/dissonantp/showscraper_standalone:latest`
+These are automatically passed through to `docker-compose` via the host environment.
 
 ## Development Workflow
 
-1. **In Codespaces**: Open repo → Codespaces builds dev container automatically
-2. **Locally**: Open in VS Code with Dev Containers extension
+### First Time Setup
+1. Configure Codespaces secrets (see above)
+2. Open repository in Codespaces
+3. Wait for devcontainer to build
+4. Verify setup: `bash .devcontainer/verify-setup.sh`
 
-Changes to code are immediately reflected (no rebuild needed) because the workspace is mounted.
+### Daily Usage
+```bash
+# Start the scraper container
+docker-compose up -d
 
-## Updating Dependencies
+# Run the scraper
+docker-compose exec scraper bin/run_scraper
 
-If you modify `Gemfile`:
-1. Run `bundle install` in the container
-2. Rebuild container: `Cmd/Ctrl + Shift + P` → "Rebuild Container"
+# View logs
+docker-compose logs -f scraper
 
-## Secrets for Codespaces
+# Stop
+docker-compose down
+```
 
-Configure these as repository secrets:
-- `STORAGE_CREDENTIALS_JSON`: GCS credentials JSON content
-- `STORAGE_PROJECT`: GCP project ID
-- `GCS_BUCKET`: GCS bucket name
+### Making Code Changes
+- Edit files directly in the workspace
+- Rebuild the image: `docker-compose build`
+- Restart: `docker-compose up -d`
 
-The post-create script automatically writes the credentials file from the env var.
+## Production vs Development
+
+### Production (root Dockerfile)
+- Minimal `ruby:3.3-slim` image
+- Published to `ghcr.io/dissonantp/showscraper_standalone:latest`
+- Auto-built by GitHub Actions on push to main/master
+
+### Development (this setup)
+- Standard Ubuntu devcontainer with Docker
+- You build/run the production image locally via docker-compose
+- Full dev tools available (git, editors, etc.)
+
+## Troubleshooting
+
+Run the diagnostic script:
+```bash
+bash .devcontainer/verify-setup.sh
+```
+
+### Common Issues
+
+**Credentials not found**
+- Check that `STORAGE_CREDENTIALS_JSON` is set as a Codespaces secret
+- Rebuild the Codespace (Full Rebuild)
+
+**Docker not available**
+- This shouldn't happen - Docker-in-Docker is configured
+- Try: `sudo service docker start`
+
+**Environment variables not set in docker-compose**
+- They're passed through from the host (devcontainer shell)
+- Verify they're set in your shell: `env | grep STORAGE`

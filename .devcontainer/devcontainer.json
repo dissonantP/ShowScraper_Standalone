@@ -1,8 +1,13 @@
 {
   "name": "ShowScraper Dev",
-  "dockerComposeFile": "docker-compose.dev.yml",
-  "service": "scraper",
-  "workspaceFolder": "/app",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/ruby:1": {
+      "version": "3.3"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -14,14 +19,13 @@
       }
     }
   },
-  "containerEnv": {
-    "STORAGE_CREDENTIALS": "/app/credentials/showscraper.json"
-  },
   "remoteEnv": {
-    "CODESPACES": "true"
+    "CODESPACES": "true",
+    "STORAGE_CREDENTIALS_JSON": "${localEnv:STORAGE_CREDENTIALS_JSON}",
+    "STORAGE_PROJECT": "${localEnv:STORAGE_PROJECT}",
+    "GCS_BUCKET": "${localEnv:GCS_BUCKET}",
+    "GCS_TEST_BUCKET": "${localEnv:GCS_TEST_BUCKET}",
+    "NO_GCS": "${localEnv:NO_GCS}"
   },
-  "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
-  }
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
 }

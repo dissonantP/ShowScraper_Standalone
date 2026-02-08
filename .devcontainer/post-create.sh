@@ -1,34 +1,47 @@
 #!/bin/bash
 set -e
 
-# Post-create script for Codespaces
-# This sets up environment variables from secrets
+echo "=== Post-Create Setup ==="
+echo ""
 
-# If running in Codespaces, GitHub secrets are already injected as env vars
-# If running locally, load from .env file
-
-if [ ! -f /app/.env ]; then
-  # Create .env from example if it doesn't exist
-  cp /app/.env.example /app/.env
-  echo "Created .env from .env.example"
-  
-  # If we're in Codespaces, the secrets should already be set as env vars
-  # If running locally, user needs to manually edit .env
-  if [ -z "$CODESPACES" ]; then
-    echo "⚠️  .env created from .env.example"
-    echo "Please update it with your configuration values and credentials JSON path"
-  fi
+# Create .env file if it doesn't exist
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo "✓ Created .env from .env.example"
+else
+  echo "✓ .env already exists"
 fi
 
-# Handle credentials JSON
-# In Codespaces: STORAGE_CREDENTIALS_JSON env var contains the JSON
-# Locally: STORAGE_CREDENTIALS env var points to file path
+# Create credentials directory
+mkdir -p credentials
+
+# Handle credentials JSON for Codespaces
+# GitHub Codespaces secrets are automatically available as environment variables
 if [ ! -z "$STORAGE_CREDENTIALS_JSON" ]; then
-  mkdir -p /app/credentials
-  echo "$STORAGE_CREDENTIALS_JSON" > /app/credentials/showscraper.json
-  chmod 600 /app/credentials/showscraper.json
-  echo "✓ Credentials JSON written to /app/credentials/showscraper.json"
-  echo "✓ STORAGE_CREDENTIALS env var set via devcontainer.json"
+  echo "$STORAGE_CREDENTIALS_JSON" > credentials/showscraper.json
+  chmod 600 credentials/showscraper.json
+  echo "✓ Credentials written to credentials/showscraper.json from STORAGE_CREDENTIALS_JSON"
+
+  # Export for current shell (and add to .bashrc for future shells)
+  export STORAGE_CREDENTIALS="$(pwd)/credentials/showscraper.json"
+  if ! grep -q "STORAGE_CREDENTIALS" ~/.bashrc; then
+    echo "export STORAGE_CREDENTIALS=\"\$(pwd)/credentials/showscraper.json\"" >> ~/.bashrc
+    echo "✓ Added STORAGE_CREDENTIALS to ~/.bashrc"
+  fi
+else
+  echo "⚠️  STORAGE_CREDENTIALS_JSON not set - you'll need to manually add credentials"
 fi
 
-echo "✓ Setup complete"
+# Create logs directory
+mkdir -p logs
+
+echo ""
+echo "=== Setup Complete ==="
+echo ""
+echo "To run the scraper:"
+echo "  1. docker-compose up -d"
+echo "  2. docker-compose exec scraper bin/run_scraper"
+echo ""
+echo "To verify setup:"
+echo "  bash .devcontainer/verify-setup.sh"
+echo ""
