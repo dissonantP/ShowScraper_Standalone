@@ -34,14 +34,8 @@ RUN chmod +x bin/run_scraper bin/cron_wrapper.sh \
     && chmod 0644 /etc/cron.d/scraper-cron \
     && crontab /etc/cron.d/scraper-cron
 
-# Set environment variables
+# Set geckodriver path
 ENV GECKODRIVER_PATH=/usr/local/bin/geckodriver
-ENV HEADLESS=true
-ENV NO_DB=true
-ENV NO_GCS=false
-ENV PRINT_EVENTS=true
-ENV PRINT_FULL_DETAIL=false
-ENV RESCUE_SCRAPING_ERRORS=true
 
 # Create directories for volumes
 RUN mkdir -p credentials logs
