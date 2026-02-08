@@ -11,27 +11,12 @@ services:
     container_name: showscraper
     # Optional: for local development, create .env.local with additional variables
     environment:
-      # Browser settings
-      - HEADLESS=true
-
-      # Database settings
-      - NO_DB=true
-
-      # Google Cloud Storage settings
+      # Google Cloud Storage settings (override Dockerfile defaults if needed)
       - NO_GCS=${NO_GCS:-false}
       - STORAGE_PROJECT=${STORAGE_PROJECT}
       - GCS_BUCKET=${GCS_BUCKET}
       - GCS_TEST_BUCKET=${GCS_TEST_BUCKET}
-      
-      # Credentials: pass as environment variable and entrypoint script will write file
       - STORAGE_CREDENTIALS_JSON=${STORAGE_CREDENTIALS_JSON}
-
-      # Output settings
-      - PRINT_EVENTS=true
-      - PRINT_FULL_DETAIL=false
-
-      # Error handling
-      - RESCUE_SCRAPING_ERRORS=true
 
       # Logging
       - LOG_PATH=/app/logs/scraper.log
