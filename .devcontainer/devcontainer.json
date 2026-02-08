@@ -1,17 +1,24 @@
 {
-  "name": "ShowScraper",
-  "dockerComposeFile": "../docker-compose.yml",
+  "name": "ShowScraper Dev",
+  "dockerComposeFile": "docker-compose.dev.yml",
   "service": "scraper",
   "workspaceFolder": "/app",
   "customizations": {
     "vscode": {
       "extensions": [
-        "rebornix.ruby"
-      ]
+        "rebornix.ruby",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
     }
   },
   "remoteEnv": {
     "CODESPACES": "true"
   },
-  "postCreateCommand": "bash .devcontainer/post-create.sh"
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  }
 }
