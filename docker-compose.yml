@@ -2,9 +2,12 @@ version: '3.8'
 
 services:
   scraper:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/dissonantp/showscraper:latest
+    pull_policy: always
+    # Uncomment to build locally instead of pulling from registry:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: showscraper
     env_file:
       - .env
