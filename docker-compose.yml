@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: showscraper
+    env_file:
+      - .env
+    environment:
+      # Browser settings
+      - HEADLESS=true
+
+      # Database settings
+      - NO_DB=true
+
+      # Google Cloud Storage settings
+      - NO_GCS=${NO_GCS:-false}
+      - STORAGE_PROJECT=${STORAGE_PROJECT}
+      - STORAGE_CREDENTIALS=/app/credentials/showscraper-04e33a342c5a.json
+      - GCS_BUCKET=${GCS_BUCKET}
+      - GCS_TEST_BUCKET=${GCS_TEST_BUCKET}
+
+      # Output settings
+      - PRINT_EVENTS=true
+      - PRINT_FULL_DETAIL=false
+
+      # Error handling
+      - RESCUE_SCRAPING_ERRORS=true
+
+      # Logging
+      - LOG_PATH=/app/logs/scraper.log
+
+    volumes:
+      # Mount credentials directory if using GCS
+      - ${CREDENTIALS_PATH:-./credentials}:/app/credentials:ro
+
+      # Mount logs directory to persist logs
+      - ${LOGS_PATH:-./logs}:/app/logs
+
+      # Optional: mount sources.json for dynamic updates
+      - ${SOURCES_JSON:-./sources.json}:/app/sources.json:ro
+
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+    # Keep container running
+    restart: unless-stopped
