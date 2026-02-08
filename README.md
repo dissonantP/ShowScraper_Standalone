@@ -59,6 +59,32 @@ This Docker container includes:
      showscraper
    ```
 
+### Using GitHub Codespaces
+
+1. **Set up repository secrets** at `https://github.com/your-repo/settings/codespaces/secrets`:
+   - `STORAGE_PROJECT`: Your GCP project ID
+   - `GCS_BUCKET`: Your GCS bucket name
+   - `GCS_TEST_BUCKET`: Your test bucket name
+   - `STORAGE_CREDENTIALS_JSON`: Your GCS credentials as JSON (the tool will handle encoding)
+
+2. **Launch Codespace**:
+   - Go to your repository → Code → Codespaces → Create Codespace on master
+   - The `.devcontainer` configuration will automatically:
+     - Install Ruby extensions
+     - Create `.env` from `.env.example`
+     - Apply environment variables from secrets
+     - Run the post-create setup script
+
+3. **Run the scraper** in the terminal:
+   ```bash
+   docker-compose up
+   ```
+
+**Local Development** (outside Codespaces):
+- Create a `.env` file from the template: `cp .env.example .env`
+- Edit `.env` with your actual values
+- Run: `docker-compose up`
+
 ## Configuration
 
 ### Environment Variables
@@ -123,15 +149,24 @@ volumes:
 
 If using GCS to store scraped data:
 
+### Option 1: File-based credentials (Local Development)
+
 1. Place your GCS credentials JSON file in `credentials/` directory
 2. Set environment variables in `docker-compose.yml` or `.env`:
    ```bash
    NO_GCS=false
    STORAGE_PROJECT=your-project-id
-   STORAGE_CREDENTIALS=/app/credentials/your-credentials.json
    GCS_BUCKET=your-bucket-name
    GCS_TEST_BUCKET=your-test-bucket-name
    ```
+
+The container will automatically detect the credentials file in the mounted volume.
+
+### Option 2: Environment variable (Codespaces/CI/CD)
+
+1. Set `STORAGE_CREDENTIALS_JSON` environment variable with your credentials JSON content
+2. The entrypoint script will automatically write it to `/app/credentials/showscraper.json`
+3. In Codespaces, set this as a repository secret (see "Using GitHub Codespaces" section above)
 
 ## Running Without GCS
 
@@ -143,15 +178,34 @@ docker-compose run --rm -e NO_GCS=true scraper
 
 ## Scheduled Runs
 
-### Using Cron
+### Using Docker Cron
 
-Add to your crontab:
+The container runs with `sleep infinity` by default (no cron). To enable cron scheduling inside the container:
+
 ```bash
-# Run scraper daily at 2 AM
-0 2 * * * cd /path/to/ShowScraper/Scraper && docker-compose up
+# Run with cron enabled
+docker-compose run --rm scraper cron
 ```
 
-### Using Kubernetes CronJob
+Or override in `docker-compose.yml`:
+```yaml
+command: cron
+```
+
+### Using Host Cron
+
+Add to your system crontab:
+```bash
+# Run scraper daily at 2 AM
+0 2 * * * cd /path/to/ShowScraper && docker-compose run --rm scraper bash -c "bundle exec bin/run_scraper"
+```
+
+### Using Docker Compose in Cron
+
+```bash
+# Run scraper daily at 2 AM
+0 2 * * * cd /path/to/ShowScraper && docker-compose run --rm scraper bash -c "bundle exec bin/run_scraper"
+```
 
 ```yaml
 apiVersion: batch/v1

@@ -30,7 +30,7 @@ COPY sources.json ./
 COPY .env.example ./
 COPY crontab /etc/cron.d/scraper-cron
 
-RUN chmod +x bin/run_scraper bin/cron_wrapper.sh \
+RUN chmod +x bin/run_scraper bin/cron_wrapper.sh bin/entrypoint.sh \
     && chmod 0644 /etc/cron.d/scraper-cron \
     && crontab /etc/cron.d/scraper-cron
 
@@ -46,5 +46,6 @@ ENV RESCUE_SCRAPING_ERRORS=true
 # Create directories for volumes
 RUN mkdir -p credentials logs
 
-# Start cron in foreground
-CMD ["cron", "-f"]
+# Set entrypoint and default command
+ENTRYPOINT ["/app/bin/entrypoint.sh"]
+CMD ["sleep", "infinity"]

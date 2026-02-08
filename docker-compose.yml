@@ -9,8 +9,7 @@ services:
     #   context: .
     #   dockerfile: Dockerfile
     container_name: showscraper
-    env_file:
-      - .env
+    # Optional: for local development, create .env.local with additional variables
     environment:
       # Browser settings
       - HEADLESS=true
@@ -21,9 +20,11 @@ services:
       # Google Cloud Storage settings
       - NO_GCS=${NO_GCS:-false}
       - STORAGE_PROJECT=${STORAGE_PROJECT}
-      - STORAGE_CREDENTIALS=/app/credentials/showscraper-04e33a342c5a.json
       - GCS_BUCKET=${GCS_BUCKET}
       - GCS_TEST_BUCKET=${GCS_TEST_BUCKET}
+      
+      # Credentials: pass as environment variable and entrypoint script will write file
+      - STORAGE_CREDENTIALS_JSON=${STORAGE_CREDENTIALS_JSON}
 
       # Output settings
       - PRINT_EVENTS=true
@@ -57,3 +58,5 @@ services:
 
     # Keep container running
     restart: unless-stopped
+    
+    # To enable cron, override with: docker-compose run --rm scraper cron

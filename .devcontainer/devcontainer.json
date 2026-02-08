@@ -1,0 +1,17 @@
+{
+  "name": "ShowScraper",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "scraper",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rebornix.ruby"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "CODESPACES": "true"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}
