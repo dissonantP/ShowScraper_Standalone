@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   scraper:
-    image: ghcr.io/dissonantp/showscraper:latest
+    image: ghcr.io/dissonantp/showscraper_standalone:latest
     pull_policy: always
     # Uncomment to build locally instead of pulling from registry:
     # build:
