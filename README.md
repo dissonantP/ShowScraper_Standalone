@@ -61,29 +61,28 @@ This Docker container includes:
 
 ### Using GitHub Codespaces
 
-1. **Set up repository secrets** at `https://github.com/your-repo/settings/codespaces/secrets`:
-   - `STORAGE_PROJECT`: Your GCP project ID
-   - `GCS_BUCKET`: Your GCS bucket name
-   - `GCS_TEST_BUCKET`: Your test bucket name
-   - `STORAGE_CREDENTIALS_JSON`: Your GCS credentials as JSON (the tool will handle encoding)
+1. **Set up repository secrets** (optional):
+   - Go to `https://github.com/your-repo/settings/codespaces/secrets`
+   - Add `STORAGE_CREDENTIALS_JSON`: Your GCS credentials as JSON
 
 2. **Launch Codespace**:
-   - Go to your repository → Code → Codespaces → Create Codespace on master
-   - The `.devcontainer` configuration will automatically:
-     - Install Ruby extensions
-     - Create `.env` from `.env.example`
-     - Apply environment variables from secrets
-     - Run the post-create setup script
-
-3. **Run the scraper** in the terminal:
    ```bash
-   docker-compose up
+   gh codespace create --repo dissonantP/ShowScraper_Standalone
+   gh codespace ssh
    ```
 
-**Local Development** (outside Codespaces):
-- Create a `.env` file from the template: `cp .env.example .env`
-- Edit `.env` with your actual values
-- Run: `docker-compose up`
+3. **Run setup**:
+   ```bash
+   bash setup.sh  # Creates .env, handles credentials
+   ```
+
+4. **Start the scraper**:
+   ```bash
+   docker-compose up -d
+   docker-compose exec scraper bin/run_scraper
+   ```
+
+Codespaces uses the default Ubuntu environment with Docker pre-installed.
 
 ## Configuration
 
