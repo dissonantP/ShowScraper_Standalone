@@ -1,0 +1,11 @@
+{
+  "name": "Scraper Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  }
+}
