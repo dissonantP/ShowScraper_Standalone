@@ -30,7 +30,7 @@ COPY sources.json ./
 COPY .env.example ./
 COPY crontab /etc/cron.d/scraper-cron
 
-RUN chmod +x bin/run_scraper bin/cron_wrapper.sh bin/entrypoint.sh \
+RUN chmod +x bin/run_scraper bin/cron_wrapper.sh \
     && chmod 0644 /etc/cron.d/scraper-cron \
     && crontab /etc/cron.d/scraper-cron
 
