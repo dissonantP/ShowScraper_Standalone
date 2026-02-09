@@ -1,0 +1,5 @@
+{
+  "name": "ShowScraper",
+  "image": "mcr.microsoft.com/devcontainers/universal:5.1-linux",
+  "postStartCommand": ".devcontainer/setup.sh"
+}
