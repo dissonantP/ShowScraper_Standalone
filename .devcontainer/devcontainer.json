@@ -1,11 +1,3 @@
 {
-  "name": "Scraper Dev Container",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": []
-    }
-  }
+  "postStartCommand": ".devcontainer_setup.sh"
 }
