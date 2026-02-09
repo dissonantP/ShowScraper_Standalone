@@ -1,5 +1,5 @@
 #!/bin/bash
 set -e
-
-./show_scraper_setup.sh
-./codex_setup.sh
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+$SCRIPT_DIR/show_scraper_setup.sh
+$SCRIPT_DIR/codex_setup.sh
