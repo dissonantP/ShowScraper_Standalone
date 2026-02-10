@@ -8,7 +8,7 @@ class GCS
 
   self.storage = Google::Cloud::Storage.new(
     project_id: ENV.fetch("STORAGE_PROJECT"),
-    credentials: ENV.fetch("STORAGE_CREDENTIALS")
+    credentials: "credentials/credentials.json"
   )
   self.bucket_name = ENV.fetch(ENV["TEST"] == "true" ? "GCS_TEST_BUCKET" : "GCS_BUCKET")
   self.bucket = storage.bucket(bucket_name)

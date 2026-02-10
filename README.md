@@ -59,30 +59,15 @@ This Docker container includes:
      showscraper
    ```
 
-### Using GitHub Codespaces
+### Using Sprites
 
-1. **Set up repository secrets** (optional):
-   - Go to `https://github.com/your-repo/settings/codespaces/secrets`
-   - Add `STORAGE_CREDENTIALS_JSON`: Your GCS credentials as JSON
+Provision a [Sprite](https://sprites.dev) dev environment with all tools pre-installed:
 
-2. **Launch Codespace**:
-   ```bash
-   gh codespace create --repo dissonantP/ShowScraper_Standalone
-   gh codespace ssh
-   ```
+```bash
+bash sprite_setup.sh
+```
 
-3. **Run setup**:
-   ```bash
-   bash devcontainer_setup.sh
-   ```
-
-4. **Start the scraper**:
-   ```bash
-   docker-compose up -d
-   docker-compose exec scraper bin/run_scraper
-   ```
-
-Codespaces uses the default Ubuntu environment with Docker pre-installed.
+This runs base provisioning (Docker, Codex, Playwright MCP, gh CLI), clones the repo, and copies `.env` and GCS credentials.
 
 ## Configuration
 
@@ -160,12 +145,6 @@ If using GCS to store scraped data:
    ```
 
 The container will automatically detect the credentials file in the mounted volume.
-
-### Option 2: Environment variable (Codespaces/CI/CD)
-
-1. Set `STORAGE_CREDENTIALS_JSON` environment variable with your credentials JSON content
-2. The entrypoint script will automatically write it to `/app/credentials/showscraper.json`
-3. In Codespaces, set this as a repository secret (see "Using GitHub Codespaces" section above)
 
 ## Running Without GCS
 

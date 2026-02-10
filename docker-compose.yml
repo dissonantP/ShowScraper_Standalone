@@ -22,8 +22,6 @@ services:
       - STORAGE_PROJECT=${STORAGE_PROJECT}
       - GCS_BUCKET=${GCS_BUCKET}
       - GCS_TEST_BUCKET=${GCS_TEST_BUCKET}
-      - STORAGE_CREDENTIALS_JSON=${STORAGE_CREDENTIALS_JSON}
-
       # Output settings
       - PRINT_EVENTS=true
       - PRINT_FULL_DETAIL=false
