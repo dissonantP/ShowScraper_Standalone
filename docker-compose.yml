@@ -30,6 +30,9 @@ services:
       - RESCUE_SCRAPING_ERRORS=true
 
       # Logging
+      - LOG_GCS_PATH=${LOG_GCS_PATH:-scraper.log}
+      - LOG_RETENTION_DAYS=${LOG_RETENTION_DAYS:-2}
+      - LOG_MAX_LINES=${LOG_MAX_LINES:-200}
       - LOG_PATH=/app/logs/scraper.log
 
     volumes:

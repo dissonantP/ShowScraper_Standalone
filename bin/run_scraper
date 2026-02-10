@@ -53,14 +53,11 @@ errors.each do |error|
   puts "ERROR: #{error[:source]} failed to scrape. Skipped."
 end
 
-# Write the event count to a condensed log file
-unless ENV["LOG_PATH"].blank?
-  File.open(ENV["LOG_PATH"], "a") do |f|
-    warnings.each do |source|
-      f.puts "#{Time.now.strftime("%m/%d/%Y")}: WARNING: #{source} produced no events"
-    end
-    errors.each do |error|
-      f.puts "#{Time.now.strftime("%m/%d/%Y")}: ERROR: #{error[:source]} failed to scrape"
-    end
-  end
+log_lines = []
+warnings.each do |source|
+  log_lines << "#{Time.now.strftime("%m/%d/%Y")}: WARNING: #{source} produced no events"
 end
+errors.each do |error|
+  log_lines << "#{Time.now.strftime("%m/%d/%Y")}: ERROR: #{error[:source]} failed to scrape"
+end
+Utils.append_log_lines(log_lines)

@@ -1,4 +1,6 @@
 require "google/cloud/storage"
+require "tempfile"
+require "stringio"
 
 class GCS
   # CACHE_CONTROL = "Cache-Control:max-age=300" # 5 minutes cache
@@ -22,12 +24,18 @@ class GCS
   end
 
   def self.download_file(source:, dest:)
-    bucket.file(source).download(dest)
+    file = bucket.file(source)
+    return false unless file
+    file.download(dest)
+    true
   end
 
   def self.download_file_as_text(source:)
     temp = Tempfile.new
-    download_file(source: source, dest: temp.path)
+    return nil unless download_file(source: source, dest: temp.path)
+    temp.rewind
     temp.read
+  ensure
+    temp&.close!
   end
 end

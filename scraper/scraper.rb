@@ -2,6 +2,7 @@ require "selenium-webdriver"
 require 'pry'
 require 'active_support/all'
 require 'dotenv'
+require 'date'
 
 Dotenv.load("#{__dir__}/../.env")
 
@@ -19,6 +20,10 @@ else
 end
 
 class Utils
+  DEFAULT_LOG_GCS_PATH = "scraper.log"
+  DEFAULT_LOG_RETENTION_DAYS = 2
+  DEFAULT_LOG_MAX_LINES = 200
+
   def self.print_event_preview(source, data)
     return unless ENV["PRINT_EVENTS"] == "true"
     if ENV["PRINT_FULL_DETAIL"] == "true"
@@ -32,6 +37,75 @@ class Utils
     $driver&.quit
     exit!
   end
+
+  def self.append_log_lines(lines)
+    lines = Array(lines).map(&:to_s).reject(&:blank?)
+    return if lines.empty?
+
+    if log_to_gcs?
+      append_lines_to_gcs(lines)
+    elsif ENV["LOG_PATH"].present?
+      File.open(ENV["LOG_PATH"], "a") do |f|
+        lines.each { |line| f.puts(line) }
+      end
+    end
+  rescue => e
+    puts "WARNING: failed to write logs: #{e.class} #{e.message}"
+    return if ENV["LOG_PATH"].blank?
+    File.open(ENV["LOG_PATH"], "a") do |f|
+      lines.each { |line| f.puts(line) }
+    end
+  end
+
+  def self.log_to_gcs?
+    GCS.present? && log_gcs_path.present?
+  end
+
+  def self.log_gcs_path
+    return nil if ENV.key?("LOG_GCS_PATH") && ENV["LOG_GCS_PATH"].blank?
+    ENV["LOG_GCS_PATH"].presence || DEFAULT_LOG_GCS_PATH
+  end
+
+  def self.log_retention_days
+    (ENV["LOG_RETENTION_DAYS"].presence || DEFAULT_LOG_RETENTION_DAYS).to_i
+  end
+
+  def self.log_max_lines
+    (ENV["LOG_MAX_LINES"].presence || DEFAULT_LOG_MAX_LINES).to_i
+  end
+
+  def self.append_lines_to_gcs(new_lines)
+    existing_text = GCS.download_file_as_text(source: log_gcs_path).to_s
+    existing_lines = existing_text.lines.map(&:chomp)
+    final_lines = apply_log_retention(existing_lines + new_lines)
+    payload = final_lines.join("\n")
+    payload += "\n" unless payload.empty?
+    GCS.upload_text_as_file(text: payload, dest: log_gcs_path)
+  end
+  private_class_method :append_lines_to_gcs
+
+  def self.apply_log_retention(lines)
+    cutoff_date = Date.today - log_retention_days.days
+    recent_lines = lines.select do |line|
+      line_date = parse_log_date(line)
+      line_date.nil? || line_date >= cutoff_date
+    end
+    recent_lines.last(log_max_lines)
+  end
+  private_class_method :apply_log_retention
+
+  def self.parse_log_date(line)
+    if (mdy = line.match(/\A(\d{2}\/\d{2}\/\d{4})/))
+      return Date.strptime(mdy[1], "%m/%d/%Y")
+    end
+    if (iso = line.match(/\A(\d{4}-\d{2}-\d{2})/))
+      return Date.strptime(iso[1], "%Y-%m-%d")
+    end
+    nil
+  rescue ArgumentError
+    nil
+  end
+  private_class_method :parse_log_date
 end
 
 def quit!; Utils.quit! end
@@ -117,12 +191,9 @@ class Scraper
       # upload to GCS
       GCS&.upload_text_as_file(text: json, dest: "#{source}.json")
 
-      # Write the event count to a condensed log file
-      unless ENV["LOG_PATH"].blank?
-        File.open(ENV["LOG_PATH"], "a") do |f|
-          f.puts "#{Time.now.strftime("%m/%d/%Y")}: scraped #{event_list.uniq.count.to_s.ljust(4)} events from #{source}"
-        end
-      end
+      Utils.append_log_lines(
+        "#{Time.now.strftime("%m/%d/%Y")}: scraped #{event_list.uniq.count.to_s.ljust(4)} events from #{source}"
+      )
     end
 
     def init_driver

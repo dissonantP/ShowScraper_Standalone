@@ -83,7 +83,10 @@ Configure the scraper behavior using environment variables:
 | `PRINT_EVENTS` | `true` | Print events as they are scraped |
 | `PRINT_FULL_DETAIL` | `false` | Print full JSON or condensed output |
 | `RESCUE_SCRAPING_ERRORS` | `true` | Continue on errors |
-| `LOG_PATH` | `/app/logs/scraper.log` | Path to log file |
+| `LOG_GCS_PATH` | `scraper.log` | GCS object path for condensed scraper logs |
+| `LOG_RETENTION_DAYS` | `2` | Keep only this many trailing days in GCS logs |
+| `LOG_MAX_LINES` | `200` | Hard cap on retained GCS log lines |
+| `LOG_PATH` | `/app/logs/scraper.log` | Local file fallback path if GCS logging is disabled |
 
 ### Command Line Options
 
@@ -251,8 +254,11 @@ docker-compose logs -f
 # Using Docker CLI
 docker logs -f showscraper
 
-# View file logs
+# View local fallback file logs
 tail -f logs/scraper.log
+
+# View GCS log object (requires gsutil)
+gsutil cat gs://$GCS_BUCKET/scraper.log
 ```
 
 ## Development
