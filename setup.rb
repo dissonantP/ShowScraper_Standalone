@@ -49,8 +49,10 @@ class SetupScript
 
     puts "✗ Firefox not found"
 
-    if system('which apt-get > /dev/null 2>&1')
-      puts "  Install with: sudo apt-get install firefox-esr"
+    if system('which snap > /dev/null 2>&1')
+      puts "  Install with: sudo snap install firefox"
+    elsif system('which apt-get > /dev/null 2>&1')
+      puts "  Install with: sudo apt-get install firefox or sudo snap install firefox"
     elsif system('which brew > /dev/null 2>&1')
       puts "  Install with: brew install firefox"
     else
