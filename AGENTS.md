@@ -202,12 +202,19 @@ Primary vars:
 
 ### docker-compose
 
-- Service `scraper` pulls image from GHCR by default.
+- Service `scraper` builds a local image by default.
 - Mounts:
   - credentials: `/app/credentials` (read-only)
   - logs: `/app/logs`
   - `sources.json`: `/app/sources.json` (read-only override)
 - `restart: unless-stopped`
+
+### Local execution policy
+
+- Do not run `bundle install` manually for normal development/testing workflows.
+- Do not run the scraper directly with host Ruby for normal workflows.
+- Always run the app through `bin/run_scraper_docker`, which runs `docker compose run --rm --build ...` and ensures dependencies/environment are resolved in-container.
+- Use `bin/run_scraper_docker` for one-off runs and source-specific tests (for example: `bin/run_scraper_docker --sources GreatAmericanMusicHall --limit 5 --skip-persist`).
 
 ### Cron
 
@@ -290,4 +297,3 @@ Primary vars:
 - `Dockerfile`: runtime image
 - `docker-compose.yml`: runtime orchestration and mounts
 - `crontab`: in-container schedule
-
