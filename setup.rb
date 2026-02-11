@@ -47,24 +47,70 @@ class SetupScript
     rescue Errno::ENOENT
     end
 
-    puts "✗ Firefox not found"
+    puts "not found, downloading..."
+    install_firefox_binary
+  end
 
-    if system('which brew > /dev/null 2>&1')
-      puts "  Installing Firefox with Homebrew..."
-      system('brew install firefox')
-      return if system('which firefox > /dev/null 2>&1')
-    elsif system('which snap > /dev/null 2>&1')
-      puts "  Installing Firefox with snap..."
-      system('sudo snap install firefox')
-      return if system('which firefox > /dev/null 2>&1')
-    elsif system('which apt-get > /dev/null 2>&1')
-      puts "  Installing Firefox with apt-get..."
-      system('sudo apt-get update && sudo apt-get install -y firefox-esr')
-      return if system('which firefox > /dev/null 2>&1')
+  def install_firefox_binary
+    arch = `uname -m`.strip
+    os = `uname -s`.strip.downcase
+
+    url = case [os, arch]
+          when ['linux', 'x86_64']
+            'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
+          when ['linux', 'aarch64']
+            'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux-aarch64&lang=en-US'
+          when ['darwin', 'arm64']
+            'https://download.mozilla.org/?product=firefox-latest-ssl&os=osx&lang=en-US'
+          when ['darwin', 'x86_64']
+            'https://download.mozilla.org/?product=firefox-latest-ssl&os=osx&lang=en-US'
+          else
+            puts "  ✗ Unsupported platform: #{os} #{arch}"
+            @failed = true
+            return
+          end
+
+    begin
+      require 'net/http'
+      require 'tempfile'
+
+      temp_dir = Dir.mktmpdir
+      tar_path = File.join(temp_dir, 'firefox.tar.bz2')
+
+      puts "  Downloading Firefox..."
+      uri = URI(url)
+      Net::HTTP.get_response(uri) do |response|
+        if response.code == '302' || response.code == '301'
+          uri = URI(response['location'])
+          retry
+        end
+
+        File.open(tar_path, 'wb') do |file|
+          response.read_body do |chunk|
+            file.write(chunk)
+          end
+        end
+      end
+
+      puts "  Extracting Firefox..."
+      system("tar xjf #{tar_path} -C #{temp_dir}")
+      firefox_path = File.join(temp_dir, 'firefox', 'firefox')
+
+      if File.exist?(firefox_path)
+        bin_dir = 'bin'
+        FileUtils.mkdir_p(bin_dir)
+        FileUtils.cp_r(File.join(temp_dir, 'firefox'), bin_dir)
+        puts "  ✓ Installed to ./bin/firefox/firefox"
+      else
+        puts "  ✗ Failed to extract Firefox"
+        @failed = true
+      end
+
+      FileUtils.rm_rf(temp_dir)
+    rescue => e
+      puts "  ✗ Error installing Firefox: #{e.message}"
+      @failed = true
     end
-
-    puts "  ✗ Could not auto-install Firefox. Please install manually."
-    @failed = true
   end
 
   def install_geckodriver
