@@ -3,8 +3,10 @@ require "tempfile"
 require "stringio"
 
 class GCS
-  # CACHE_CONTROL = "Cache-Control:max-age=300" # 5 minutes cache
-  CACHE_CONTROL = "Cache-Control:no-cache"
+  # Standard cache control value used for venue JSON artifacts.
+  CACHE_CONTROL = "no-cache"
+  # Strong no-store directive for frequently-updated log objects.
+  CACHE_CONTROL_NO_STORE = "no-store, max-age=0, must-revalidate"
 
   cattr_accessor :storage, :bucket_name, :bucket
 
@@ -15,12 +17,12 @@ class GCS
   self.bucket_name = ENV.fetch(ENV["TEST"] == "true" ? "GCS_TEST_BUCKET" : "GCS_BUCKET")
   self.bucket = storage.bucket(bucket_name)
 
-  def self.upload_file(source:, dest:)
-    bucket.create_file(source, dest, cache_control: CACHE_CONTROL)
+  def self.upload_file(source:, dest:, cache_control: CACHE_CONTROL)
+    bucket.create_file(source, dest, cache_control: cache_control)
   end
 
-  def self.upload_text_as_file(text:, dest:)
-    upload_file(source: StringIO.new(text), dest: dest)
+  def self.upload_text_as_file(text:, dest:, cache_control: CACHE_CONTROL)
+    upload_file(source: StringIO.new(text), dest: dest, cache_control: cache_control)
   end
 
   def self.download_file(source:, dest:)

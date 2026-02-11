@@ -80,7 +80,11 @@ class Utils
     final_lines = apply_log_retention(existing_lines + new_lines)
     payload = final_lines.join("\n")
     payload += "\n" unless payload.empty?
-    GCS.upload_text_as_file(text: payload, dest: log_gcs_path)
+    GCS.upload_text_as_file(
+      text: payload,
+      dest: log_gcs_path,
+      cache_control: GCS::CACHE_CONTROL_NO_STORE
+    )
   end
   private_class_method :append_lines_to_gcs
 

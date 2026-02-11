@@ -84,6 +84,7 @@ Configure the scraper behavior using environment variables:
 | `PRINT_FULL_DETAIL` | `false` | Print full JSON or condensed output |
 | `RESCUE_SCRAPING_ERRORS` | `true` | Continue on errors |
 | `LOG_GCS_PATH` | `scraper.log` | GCS object path for condensed scraper logs |
+| `LOG_GCS_PATH` cache behavior | n/a | Log uploads force `Cache-Control: no-store, max-age=0, must-revalidate` |
 | `LOG_RETENTION_DAYS` | `2` | Keep only this many trailing days in GCS logs |
 | `LOG_MAX_LINES` | `200` | Hard cap on retained GCS log lines |
 | `LOG_PATH` | `/app/logs/scraper.log` | Local file fallback path if GCS logging is disabled |
