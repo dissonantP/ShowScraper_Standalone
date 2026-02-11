@@ -79,16 +79,16 @@ class SetupScript
 
       puts "  Downloading Firefox..."
       uri = URI(url)
-      Net::HTTP.get_response(uri) do |response|
-        if response.code == '302' || response.code == '301'
-          uri = URI(response['location'])
-          retry
-        end
 
-        File.open(tar_path, 'wb') do |file|
-          response.read_body do |chunk|
-            file.write(chunk)
-          end
+      response = Net::HTTP.get_response(uri)
+      if response.code == '302' || response.code == '301'
+        uri = URI(response['location'])
+        response = Net::HTTP.get_response(uri)
+      end
+
+      File.open(tar_path, 'wb') do |file|
+        response.read_body do |chunk|
+          file.write(chunk)
         end
       end
 
