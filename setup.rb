@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'open3'
+require 'tmpdir'
+require 'net/http'
+require 'uri'
 
 class SetupScript
   GECKODRIVER_VERSION = 'v0.35.0'
@@ -71,38 +74,27 @@ class SetupScript
           end
 
     begin
-      require 'net/http'
-      require 'tempfile'
-
       temp_dir = Dir.mktmpdir
       tar_path = File.join(temp_dir, 'firefox.tar.bz2')
 
       puts "  Downloading Firefox..."
-      uri = URI(url)
-
-      response = Net::HTTP.get_response(uri)
-      if response.code == '302' || response.code == '301'
-        uri = URI(response['location'])
-        response = Net::HTTP.get_response(uri)
-      end
-
-      File.open(tar_path, 'wb') do |file|
-        response.read_body do |chunk|
-          file.write(chunk)
-        end
-      end
+      download_file(url, tar_path)
 
       puts "  Extracting Firefox..."
-      system("tar xjf #{tar_path} -C #{temp_dir}")
-      firefox_path = File.join(temp_dir, 'firefox', 'firefox')
+      unless system("tar xjf #{tar_path} -C #{temp_dir}")
+        puts "  ✗ Failed to extract Firefox"
+        @failed = true
+        return
+      end
 
+      firefox_path = File.join(temp_dir, 'firefox', 'firefox')
       if File.exist?(firefox_path)
         bin_dir = 'bin'
         FileUtils.mkdir_p(bin_dir)
         FileUtils.cp_r(File.join(temp_dir, 'firefox'), bin_dir)
         puts "  ✓ Installed to ./bin/firefox/firefox"
       else
-        puts "  ✗ Failed to extract Firefox"
+        puts "  ✗ Failed to find Firefox executable after extraction"
         @failed = true
       end
 
@@ -110,6 +102,28 @@ class SetupScript
     rescue => e
       puts "  ✗ Error installing Firefox: #{e.message}"
       @failed = true
+    end
+  end
+
+  def download_file(url, dest_path)
+    require 'net/http'
+    require 'fileutils'
+
+    uri = URI(url)
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+      request = Net::HTTP::Get.new(uri.request_uri)
+      http.request(request) do |response|
+        if response.code == '302' || response.code == '301'
+          download_file(response['location'], dest_path)
+          return
+        end
+
+        File.open(dest_path, 'wb') do |file|
+          response.read_body do |chunk|
+            file.write(chunk)
+          end
+        end
+      end
     end
   end
 
@@ -141,24 +155,19 @@ class SetupScript
     url = "#{GECKODRIVER_URL}/#{GECKODRIVER_VERSION}/geckodriver-#{GECKODRIVER_VERSION}-#{gecko_arch}.tar.gz"
 
     begin
-      require 'net/http'
-      require 'tempfile'
-
       temp_dir = Dir.mktmpdir
       tar_path = File.join(temp_dir, 'geckodriver.tar.gz')
 
       # Download
-      uri = URI(url)
-      Net::HTTP.get_response(uri) do |response|
-        File.open(tar_path, 'wb') do |file|
-          response.read_body do |chunk|
-            file.write(chunk)
-          end
-        end
+      download_file(url, tar_path)
+
+      # Extract
+      unless system("tar xzf #{tar_path} -C #{temp_dir}")
+        puts "  ✗ Failed to extract geckodriver"
+        @failed = true
+        return
       end
 
-      # Extract to /usr/local/bin
-      system("tar xzf #{tar_path} -C #{temp_dir}")
       geckodriver_path = File.join(temp_dir, 'geckodriver')
 
       if File.exist?(geckodriver_path)
@@ -166,7 +175,6 @@ class SetupScript
         if system("sudo mv #{geckodriver_path} /usr/local/bin/geckodriver 2>/dev/null")
           system('sudo chmod +x /usr/local/bin/geckodriver')
           puts "  ✓ Installed to /usr/local/bin/geckodriver"
-          # Set env var in .env
           set_env_var('GECKODRIVER_PATH', '/usr/local/bin/geckodriver')
         else
           # Install locally to bin directory
