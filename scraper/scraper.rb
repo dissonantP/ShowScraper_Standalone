@@ -213,6 +213,11 @@ class Scraper
       # Set user agent to avoid bot detection
       options.add_preference('general.useragent.override', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0')
 
+      # Set Firefox binary path if specified
+      if ENV["FIREFOX_PATH"]
+        options.binary = ENV["FIREFOX_PATH"]
+      end
+
       service = Selenium::WebDriver::Service.firefox(path: ENV.fetch("GECKODRIVER_PATH", "/usr/local/bin/geckodriver"))
       driver = Selenium::WebDriver.for :firefox, options: options, service: service
 

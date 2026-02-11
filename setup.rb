@@ -96,7 +96,9 @@ class SetupScript
         bin_dir = 'bin'
         FileUtils.mkdir_p(bin_dir)
         FileUtils.cp_r(File.join(temp_dir, 'firefox'), bin_dir)
+        local_firefox_path = File.join(Dir.pwd, bin_dir, 'firefox', 'firefox')
         puts "  ✓ Installed to ./bin/firefox/firefox"
+        set_env_var('FIREFOX_PATH', local_firefox_path)
       else
         puts "  ✗ Failed to find Firefox executable after extraction"
         @failed = true
