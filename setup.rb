@@ -115,6 +115,7 @@ class SetupScript
     if system("which brew > /dev/null 2>&1")
       puts "not found, installing via Homebrew..."
       system("brew install firefox")
+      set_env_var('FIREFOX_PATH', '/Applications/Firefox.app/Contents/MacOS/firefox')
     else
       puts "✗ Firefox not found and Homebrew not available for macOS installation"
       @failed = true
