@@ -1,2 +1,0 @@
-# Run scraper every day at 8:00 AM
-0 8 * * * /app/bin/cron_wrapper.sh

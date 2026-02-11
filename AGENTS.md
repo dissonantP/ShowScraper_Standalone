@@ -2,12 +2,12 @@
 
 ## Purpose
 
-This repository is a standalone, containerized Ruby scraper that collects upcoming live-music events from many venue websites, normalizes them into a shared event shape, and writes one JSON file per venue to Google Cloud Storage (GCS).
+This repository is a standalone Ruby scraper that collects upcoming live-music events from many venue websites, normalizes them into a shared event shape, and writes one JSON file per venue to Google Cloud Storage (GCS).
 
 The runtime is intentionally simple:
 - No web server
 - No exposed ports
-- One batch process (`bin/run_scraper`) run manually or by cron
+- One batch process (`bin/run_scraper`) run manually or via system scheduler
 - Selenium + headless Firefox for dynamic pages, with selective non-browser scrapers for unstable targets
 
 ---
@@ -191,35 +191,19 @@ Primary vars:
 
 ---
 
-## Container and Scheduling Architecture
+## Execution Architecture
 
-### Docker image
+### Setup and Dependencies
 
-- Base: `ruby:3.3-slim`
-- Installs: Firefox ESR, geckodriver `v0.35.0`, cron, build tools
-- Copies app code and cron config
-- Default command: `cron -f`
+- Run `ruby setup.rb` to install system dependencies (Firefox, geckodriver) and Ruby gems.
+- Setup script auto-detects system architecture and downloads appropriate geckodriver binary.
+- Dependencies are installed locally; no containerization required.
 
-### docker-compose
+### Running the Scraper
 
-- Service `scraper` builds a local image by default.
-- Mounts:
-  - credentials: `/app/credentials` (read-only)
-  - logs: `/app/logs`
-  - `sources.json`: `/app/sources.json` (read-only override)
-- `restart: unless-stopped`
-
-### Local execution policy
-
-- Do not run `bundle install` manually for normal development/testing workflows.
-- Do not run the scraper directly with host Ruby for normal workflows.
-- Always run the app through `bin/run_scraper_docker`, which runs `docker compose run --rm --build ...` and ensures dependencies/environment are resolved in-container.
-- Use `bin/run_scraper_docker` for one-off runs and source-specific tests (for example: `bin/run_scraper_docker --sources GreatAmericanMusicHall --limit 5 --skip-persist`).
-
-### Cron
-
-- Cron schedule in `crontab`: `0 8 * * * /app/bin/cron_wrapper.sh`
-- Wrapper appends run boundaries and command output to `/app/logs/cron.log`.
+- Run the scraper directly with host Ruby: `bin/run_scraper`
+- For one-off runs and source-specific tests: `bin/run_scraper --sources GreatAmericanMusicHall --limit 5 --skip-persist`
+- Environment variables are loaded from `.env` file via Dotenv.
 
 ---
 
@@ -259,7 +243,6 @@ Primary vars:
   - `PRINT_FULL_DETAIL=true` for full payload dump
 - Logs:
   - Per-source counts and warnings/errors appended to `LOG_PATH`
-  - Cron wrapper writes full stdout/stderr boundaries to `logs/cron.log`
 - Interactive debugging:
   - `--debugger` enables `binding.pry` on exceptions in source parsers
   - Run single source with small limit for tight feedback cycle
@@ -287,13 +270,12 @@ Primary vars:
 
 ## Quick File Map
 
+- `setup.rb`: Installation script for dependencies and gems
 - `bin/run_scraper`: CLI + run summary logging
-- `bin/cron_wrapper.sh`: cron-safe wrapper and run envelope logging
 - `scraper/scraper.rb`: orchestration, driver lifecycle, persistence hooks
 - `scraper/lib/selenium_patches.rb`: Selenium monkey patches
 - `scraper/lib/gcs.rb`: GCS upload/download helper
 - `scraper/lib/sources/*.rb`: source adapters
 - `sources.json`: source registry + metadata
-- `Dockerfile`: runtime image
-- `docker-compose.yml`: runtime orchestration and mounts
-- `crontab`: in-container schedule
+- `.env.example`: environment variables template
+- `Gemfile`: Ruby dependencies

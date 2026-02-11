@@ -6,7 +6,7 @@ SETUP_URL="https://dissonantp.github.io/sprite-environment/setup.sh"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_DIR="/home/sprite/ShowScraper_Standalone"
 
-# Base provisioning (Docker, Codex, Playwright MCP, gh CLI)
+# Base provisioning (Codex, Playwright MCP, gh CLI)
 SETUP_TMP=$(mktemp)
 curl -sL "$SETUP_URL" -o "$SETUP_TMP"
 bash "$SETUP_TMP" --name "$SPRITE_NAME" --repo dissonantP/ShowScraper_Standalone
