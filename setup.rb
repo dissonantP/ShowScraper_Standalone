@@ -38,14 +38,26 @@ class SetupScript
 
   def check_firefox
     print "Checking Firefox... "
-    output, status = Open3.capture2('firefox --version')
-    if status.success?
-      puts "✓ #{output.strip}"
-    else
-      puts "✗ Firefox not found"
-      puts "  Install with: brew install firefox (macOS) or apt-get install firefox-esr (Linux)"
-      @failed = true
+    begin
+      output, status = Open3.capture2('firefox --version')
+      if status.success?
+        puts "✓ #{output.strip}"
+        return
+      end
+    rescue Errno::ENOENT
     end
+
+    puts "✗ Firefox not found"
+
+    if system('which apt-get > /dev/null 2>&1')
+      puts "  Install with: sudo apt-get install firefox-esr"
+    elsif system('which brew > /dev/null 2>&1')
+      puts "  Install with: brew install firefox"
+    else
+      puts "  Install Firefox for your system and add it to PATH"
+    end
+
+    @failed = true
   end
 
   def install_geckodriver
