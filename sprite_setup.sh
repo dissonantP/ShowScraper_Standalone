@@ -14,7 +14,7 @@ rm -f "$SETUP_TMP"
 
 # Install Firefox
 echo "==> Installing Firefox"
-sprite exec -s $SPRITE_NAME 'which snap > /dev/null 2>&1 && sudo snap install firefox || (sudo apt-get update && sudo apt-get install -y firefox-esr)'
+sprite exec -s $SPRITE_NAME brew install firefox
 
 # Copy .env
 echo "==> Copying .env"

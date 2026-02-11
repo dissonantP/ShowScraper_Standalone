@@ -49,16 +49,21 @@ class SetupScript
 
     puts "✗ Firefox not found"
 
-    if system('which snap > /dev/null 2>&1')
-      puts "  Install with: sudo snap install firefox"
+    if system('which brew > /dev/null 2>&1')
+      puts "  Installing Firefox with Homebrew..."
+      system('brew install firefox')
+      return if system('which firefox > /dev/null 2>&1')
+    elsif system('which snap > /dev/null 2>&1')
+      puts "  Installing Firefox with snap..."
+      system('sudo snap install firefox')
+      return if system('which firefox > /dev/null 2>&1')
     elsif system('which apt-get > /dev/null 2>&1')
-      puts "  Install with: sudo apt-get install firefox or sudo snap install firefox"
-    elsif system('which brew > /dev/null 2>&1')
-      puts "  Install with: brew install firefox"
-    else
-      puts "  Install Firefox for your system and add it to PATH"
+      puts "  Installing Firefox with apt-get..."
+      system('sudo apt-get update && sudo apt-get install -y firefox-esr')
+      return if system('which firefox > /dev/null 2>&1')
     end
 
+    puts "  ✗ Could not auto-install Firefox. Please install manually."
     @failed = true
   end
 
