@@ -4,6 +4,7 @@ require 'open3'
 require 'tmpdir'
 require 'net/http'
 require 'uri'
+require 'shellwords'
 
 class SetupScript
   GECKODRIVER_VERSION = 'v0.35.0'
@@ -58,15 +59,16 @@ class SetupScript
     arch = `uname -m`.strip
     os = `uname -s`.strip.downcase
 
+    # Use direct FTP links to get consistent tar formats
     url = case [os, arch]
           when ['linux', 'x86_64']
             'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
           when ['linux', 'aarch64']
             'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux-aarch64&lang=en-US'
-          when ['darwin', 'arm64']
-            'https://download.mozilla.org/?product=firefox-latest-ssl&os=osx&lang=en-US'
-          when ['darwin', 'x86_64']
-            'https://download.mozilla.org/?product=firefox-latest-ssl&os=osx&lang=en-US'
+          when ['darwin', 'arm64'], ['darwin', 'x86_64']
+            # For macOS, we'll use homebrew since DMG extraction is complex
+            install_firefox_homebrew
+            return
           else
             puts "  ✗ Unsupported platform: #{os} #{arch}"
             @failed = true
@@ -81,7 +83,9 @@ class SetupScript
       download_file(url, tar_path)
 
       puts "  Extracting Firefox..."
-      unless system("tar xjf #{tar_path} -C #{temp_dir}")
+      # Try xz first, then bzip2
+      unless system("tar xJf #{tar_path} -C #{temp_dir}") ||
+             system("tar xjf #{tar_path} -C #{temp_dir}")
         puts "  ✗ Failed to extract Firefox"
         @failed = true
         return
@@ -101,6 +105,16 @@ class SetupScript
       FileUtils.rm_rf(temp_dir)
     rescue => e
       puts "  ✗ Error installing Firefox: #{e.message}"
+      @failed = true
+    end
+  end
+
+  def install_firefox_homebrew
+    if system("which brew > /dev/null 2>&1")
+      puts "not found, installing via Homebrew..."
+      system("brew install firefox")
+    else
+      puts "✗ Firefox not found and Homebrew not available for macOS installation"
       @failed = true
     end
   end
