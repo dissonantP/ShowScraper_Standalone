@@ -12,6 +12,11 @@ curl -sL "$SETUP_URL" -o "$SETUP_TMP"
 bash "$SETUP_TMP" --name "$SPRITE_NAME" --repo dissonantP/ShowScraper_Standalone
 rm -f "$SETUP_TMP"
 
+# Install Firefox
+echo "==> Installing Firefox"
+sprite exec -s $SPRITE_NAME sudo apt-get update
+sprite exec -s $SPRITE_NAME sudo apt-get install -y firefox-esr
+
 # Copy .env
 echo "==> Copying .env"
 sprite exec -s $SPRITE_NAME -file "$DIR/.env:$REMOTE_DIR/.env" true
@@ -20,5 +25,9 @@ sprite exec -s $SPRITE_NAME -file "$DIR/.env:$REMOTE_DIR/.env" true
 echo "==> Copying credentials"
 sprite exec -s $SPRITE_NAME mkdir -p "$REMOTE_DIR/credentials"
 sprite exec -s $SPRITE_NAME -file "$DIR/credentials/credentials.json:$REMOTE_DIR/credentials/credentials.json" true
+
+# Run setup script
+echo "==> Running setup script"
+sprite exec -s $SPRITE_NAME -cwd "$REMOTE_DIR" ruby setup.rb
 
 echo "==> ShowScraper sprite ready"
