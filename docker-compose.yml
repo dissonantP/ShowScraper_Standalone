@@ -2,12 +2,11 @@ version: '3.8'
 
 services:
   scraper:
-    image: ghcr.io/dissonantp/showscraper_standalone:latest
-    pull_policy: always
-    # Uncomment to build locally instead of pulling from registry:
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: showscraper-local:dev
+    pull_policy: never
     container_name: showscraper
     # Optional: for local development, create .env.local with additional variables
     environment:

@@ -25,4 +25,4 @@ else
   EXTRA_ARGS=()
 fi
 
-exec "${SUDO_PREFIX[@]}" "${COMPOSE_CMD[@]}" run --rm "${EXTRA_ARGS[@]}" scraper bin/run_scraper "$@"
+exec "${SUDO_PREFIX[@]}" "${COMPOSE_CMD[@]}" run --rm --build "${EXTRA_ARGS[@]}" scraper bin/run_scraper "$@"
