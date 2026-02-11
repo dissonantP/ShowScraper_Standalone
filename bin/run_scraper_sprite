@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sprite -s show-scraper exec -- bash -lc '
+cd ShowScraper_Standalone
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "Unstaged changes present. Please commit or stash before pulling."
+  exit 1
+fi
+
+git pull origin master
+
+./bin/run_scraper_docker "$@"
+' -- "$@"

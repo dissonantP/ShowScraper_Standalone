@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check if --resume is the first argument
+if [[ "${1:-}" == "--resume" ]]; then
+  shift
+  sprite -s show-scraper exec --tty bash -lic '
+    cd ShowScraper_Standalone
+    codex --yolo exec resume --last "$@"
+  ' -- "$@"
+else
+  sprite -s show-scraper exec --tty bash -lic '
+    cd ShowScraper_Standalone
+    codex --yolo exec "$@"
+  ' -- "$@"
+fi
