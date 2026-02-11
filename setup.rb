@@ -106,23 +106,34 @@ class SetupScript
   end
 
   def download_file(url, dest_path)
-    require 'net/http'
-    require 'fileutils'
+    # Try curl first (usually more reliable)
+    if system("which curl > /dev/null 2>&1")
+      return if system("curl -fsSL -L #{url.shellescape} -o #{dest_path.shellescape}")
+    end
 
+    # Fall back to wget
+    if system("which wget > /dev/null 2>&1")
+      return if system("wget -q -O #{dest_path.shellescape} #{url.shellescape}")
+    end
+
+    # Fall back to Ruby HTTP (less reliable for redirects)
     uri = URI(url)
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', max_retries: 3) do |http|
       request = Net::HTTP::Get.new(uri.request_uri)
-      http.request(request) do |response|
-        if response.code == '302' || response.code == '301'
-          download_file(response['location'], dest_path)
-          return
-        end
+      request['User-Agent'] = 'Mozilla/5.0'
+      response = http.request(request)
 
+      if response.code == '302' || response.code == '301'
+        download_file(response['location'], dest_path)
+        return
+      end
+
+      if response.is_a?(Net::HTTPSuccess)
         File.open(dest_path, 'wb') do |file|
-          response.read_body do |chunk|
-            file.write(chunk)
-          end
+          file.write(response.body)
         end
+      else
+        raise "HTTP #{response.code}: #{response.message}"
       end
     end
   end
