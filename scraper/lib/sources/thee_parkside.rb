@@ -4,7 +4,7 @@ class TheeParkside
 
   cattr_accessor :events_limit, :load_time
   self.events_limit = 200
-  self.load_time = 2
+  self.load_time = 5
 
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
     $driver.navigate.to(MAIN_URL)

@@ -210,16 +210,32 @@ class Scraper
       options.add_argument('--headless') unless ENV["HEADLESS"] == "false"
       options.add_argument('--width=1920')
       options.add_argument('--height=1080')
+      # Set user agent to avoid bot detection
+      options.add_preference('general.useragent.override', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0')
 
       service = Selenium::WebDriver::Service.firefox(path: ENV.fetch("GECKODRIVER_PATH", "/usr/local/bin/geckodriver"))
       driver = Selenium::WebDriver.for :firefox, options: options, service: service
+
+      # Anti-bot fingerprinting - mask webdriver detection
+      driver.execute_script(<<~JS)
+        Object.defineProperty(navigator, 'webdriver', {
+          get: () => undefined
+        });
+        window.navigator.chrome = { runtime: {} };
+        Object.defineProperty(navigator, 'plugins', {
+          get: () => [1, 2, 3, 4, 5]
+        });
+        Object.defineProperty(navigator, 'languages', {
+          get: () => ['en-US', 'en']
+        });
+      JS
 
       SeleniumPatches.patch_driver(driver) # if compatible
       driver.manage.timeouts.page_load = 15
       driver.manage.timeouts.script_timeout = 10
 
       driver
-    end
+end
 
 
     def init_driver_chrome
