@@ -10,16 +10,16 @@ ERROR: SfJazz failed to scrape. Skipped.
 ERROR: Paramount failed to scrape. Skipped.
 
 TODOS:
-- Disable GoldenBull
-- Dont give any Warning if the following have no events:
+- [x] Disable GoldenBull
+- [x] Dont give any Warning if the following have no events:
   - Zeitgeist
   - BandcampOakland
   - ManuallyAdded
 - Fix the following:
-  - Knockout
-  - Yoshis
-  - SF Jazz
-  - Paramount
+  - [x] Knockout
+  - [x] Yoshis
+  - [x] SF Jazz
+  - [x] Paramount
 
 You can use the Playwright MCP to find the correct selectors / logic, and then translate it into Selenium.
 Note that it is possible that we have IP related issues, if you see no events on those venues which I requested

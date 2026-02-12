@@ -20,7 +20,7 @@ class Yoshis
     months_limit.times do |i|
       events = get_events
       events.each do |event|
-        next if events.count >= events_limit
+        next if results.count >= events_limit
         result = parse_event_data(event, &foreach_event_blk)
         results.push(*result)
       end
@@ -77,9 +77,11 @@ class Yoshis
     end
 
     def parse_title(event)
-      title = event.css(".etitle")[0].text
-      parts = title.split("\n")
-      [parts[1], parts[0]].compact.join(" - ")
+      title_node = event.css(".etitle h3 a")[0] || event.css(".etitle")[0]
+      subtitle_node = event.css(".etitle .topline")[0]
+      title = title_node&.text(strip: true)
+      subtitle = subtitle_node&.text(strip: true)
+      [subtitle, title].compact.reject(&:empty?).join(" - ")
     end
 
     def parse_date(event)

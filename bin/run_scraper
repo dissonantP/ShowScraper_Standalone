@@ -39,8 +39,14 @@ results, errors = Scraper.run(
 puts "done\n"
 
 warnings = []
+ignore_empty_warning_sources = %w[
+  Zeitgeist
+  BandcampOakland
+  ManuallyAdded
+]
+
 results.each do |source, events|
-  if events.count == 0
+  if events.count == 0 && !ignore_empty_warning_sources.include?(source)
     warnings << source
   end
 end
@@ -54,6 +60,11 @@ errors.each do |error|
 end
 
 log_lines = []
+if opts[:skip_persist]
+  results.each do |source, events|
+    log_lines << "#{Time.now.strftime("%m/%d/%Y")}: DRY RUN: scraped #{events.uniq.count.to_s.ljust(4)} events from #{source}"
+  end
+end
 warnings.each do |source|
   log_lines << "#{Time.now.strftime("%m/%d/%Y")}: WARNING: #{source} produced no events"
 end

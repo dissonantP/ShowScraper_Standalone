@@ -1,4 +1,5 @@
 class GoldenBull
+  DISABLED = true
   MAIN_URL = "https://goldenbullbar.com/shows" # this performs an internal redirect
 
   cattr_accessor :months_limit, :events_limit, :load_time

@@ -1,5 +1,9 @@
 class Knockout
 	# "Load more" type site
+  MAIN_URL = "https://theknockoutsf.com/calendar2"
+  NEXT_MONTH_SELECTOR = "a[aria-label='Go to next month'], button[aria-label='Go to next month']"
+  DAY_CELL_SELECTOR = "td[role='gridcell'], [role='gridcell']"
+  MONTH_HEADING_SELECTOR = "div[aria-role='heading'], div[role='heading'], [aria-live='polite']"
 
   cattr_accessor :pages_limit, :events_limit
   self.pages_limit = 5
@@ -29,17 +33,17 @@ class Knockout
 	class << self
 		private
 		def get_days(page_idx)
-			$driver.navigate.to("https://theknockoutsf.com/calendar2")
+			$driver.navigate.to(MAIN_URL)
 			page_idx.times do
 				sleep 1
-				$driver.css("a[aria-label='Go to next month']")[0].click
+				$driver.css(NEXT_MONTH_SELECTOR)[0]&.click
 				sleep 1
 			end
-			$driver.css("td[role='gridcell']")
+			$driver.css(DAY_CELL_SELECTOR)
 		end
 
 		def parse_event_data(day_container, event, &foreach_event_blk)
-			month, year = $driver.css("div[aria-role='heading']")[0].text.split(" ")
+			month, year = $driver.css(MONTH_HEADING_SELECTOR)[0]&.text.to_s.split(" ")
 			day = day_container.css(".marker-daynum")[0].text
 
 			title = event.css(".item-title")[0]&.text
