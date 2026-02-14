@@ -22,8 +22,8 @@ class Fillmore
     private
 
     def get_events
-      $driver.css("div[role='group']").reject do |box|
-        box.text.empty?
+      $driver.css("div[role='group']").select do |box|
+        box.text.present? && (box.css("time").present? || box.css("h2").present?)
       end
     end
 
@@ -42,11 +42,22 @@ class Fillmore
     end
 
     def parse_event_data(event, &foreach_event_blk)
+      date_node = event.css("time")[0]
+      date = DateTime.parse(date_node.attribute("datetime")) rescue nil
+      return if date.blank?
+
+      title = event.css("h2")[0]&.text&.strip
+      title = event.css(".chakra-heading")[0]&.text&.strip if title.blank?
+      return if title.blank?
+
+      link = event.css("a")[0]&.attribute("href")
+      link = MAIN_URL if link.blank?
+
       {
-        date: ((DateTime.parse(event.css("time")[0].attribute("datetime"))) rescue return),
-        url: event.css("a")[0].attribute("href"),
+        date: date,
+        url: link,
         img: parse_img(event),
-        title: event.css(".chakra-heading")[0].text,
+        title: title,
         details: "",
       }.
         tap { |data| Utils.print_event_preview(self, data) }.

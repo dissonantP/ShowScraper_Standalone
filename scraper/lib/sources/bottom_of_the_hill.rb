@@ -26,7 +26,7 @@ class BottomOfTheHill
 
     def parse_event_data(event, &foreach_event_blk)
       link = parse_details_link(event)
-      title = event.css(".band").map(&:text).join(", ")
+      title = parse_title(event)
       date = parse_date(event.css(".date").map(&:text).reject(&:blank?).join("")) rescue return
       return if title.blank?
       {
@@ -40,6 +40,12 @@ class BottomOfTheHill
         tap { |data| foreach_event_blk&.call(data) }
     rescue => e
       ENV["DEBUGGER"] == "true" ? binding.pry : raise
+    end
+
+    def parse_title(event)
+      event.css(".band").map(&:text).map do |title|
+        title.to_s.gsub(/\u00A0/, " ").gsub(/\s+/, " ").strip
+      end.reject(&:blank?).join(", ")
     end
 
     def parse_img(event)
