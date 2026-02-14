@@ -25,13 +25,14 @@ class BottomOfTheHill
     end
 
     def parse_event_data(event, &foreach_event_blk)
-      link = parse_details_link(event)
+      img = parse_img(event)
+      link = parse_details_link(event) || infer_details_link_from_img(img) || MAIN_URL
       title = parse_title(event)
       date = parse_date(event.css(".date").map(&:text).reject(&:blank?).join("")) rescue return
       return if title.blank?
       {
         date: date,
-        img: parse_img(event) || "https://upload.wikimedia.org/wikipedia/commons/2/2a/Bottom_of_the_hill.jpg",
+        img: img || "https://upload.wikimedia.org/wikipedia/commons/2/2a/Bottom_of_the_hill.jpg",
         title: title,
         url: link,
         details: "",
@@ -57,11 +58,24 @@ class BottomOfTheHill
     end
 
     def parse_details_link(event)
-      event.css("a").map do |event|
-        event.attribute("href")
-      end.find do |url|
-        url =~ /http:\/\/www.bottomofthehill.com\/[\d]+.html/
-      end
+      hrefs = event.css("a").map { |node| node.attribute("href").to_s.strip }.reject(&:blank?)
+
+      # Some events use letter-suffixed pages like 20260228A.html.
+      candidate = hrefs.find { |url| url.match?(%r{/(?:\d{8}[A-Za-z]?)\.html\z}i) } || hrefs.first
+      normalize_url(candidate)
+    end
+
+    def infer_details_link_from_img(img_url)
+      return if img_url.blank?
+      match = img_url.match(%r{/f/(\d{8}[A-Za-z]?)[[:alnum:]-]*\.(?:jpg|jpeg|png)\z}i)
+      return if match.blank?
+      "http://www.bottomofthehill.com/#{match[1]}.html"
+    end
+
+    def normalize_url(url)
+      return if url.blank?
+      return "http://www.bottomofthehill.com#{url}" if url.start_with?("/")
+      url
     end
 
     def parse_details
