@@ -11,5 +11,5 @@ fi
 
 git pull origin master
 
-./bin/run_scraper_docker "$@"
+./bin/run_scraper "$@"
 ' -- "$@"
