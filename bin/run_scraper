@@ -30,6 +30,8 @@ end.parse!
 
 puts "SOURCES: #{opts[:sources]}"
 
+Utils.reset_logs!
+
 results, errors = Scraper.run(
   opts[:sources],
   events_limit: opts[:limit],

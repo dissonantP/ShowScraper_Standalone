@@ -42,6 +42,7 @@ class OReilleysPub
       title = event.css(".event-card__clamp-line--two")[0].text
       date = parse_date(event) rescue nil
       return if title.blank?
+      return if date.blank?
       {
         url: event.css(".event-card-link")[0].attribute("href"),
         img: event.css(".event-card-image")[0]&.attribute("src") || "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F508879929%2F78654724783%2F1%2Foriginal.20230505-225547?h=230&w=460&auto=format%2Ccompress&q=75&sharp=10&rect=0%2C152%2C1242%2C621&s=39c1c2c43fbea1958ab34d2b46660fcc",
@@ -58,16 +59,34 @@ class OReilleysPub
     # The dates here are super annoying. Sometimes it's Monday, March 8 which can be easily parsed
     # Sometimes it's stuff like "Tuesday 8PM" which refers to the next occurring Tuesday.
     def parse_date(event)
-      date_str = event.css(".event-card__clamp-line--one")[0].text
-      if date_str.include?("Today")
-        DateTime.now
-      elsif date_str.include?("Tomorrow")
-        DateTime.now + 1.day
-      elsif date_str.include?(",") # e.g. Monday, March 8
-        return DateTime.parse(date_str)
+      date_str = event.css(".event-card__clamp-line--one")[0].text.to_s.gsub(/\s+/, " ").strip
+      normalized = date_str.sub(/\s*\+\s*\d+\s+more\z/i, "").gsub("•", ", ").gsub(/\s+,/, ",").squeeze(" ").strip
+      downcased = normalized.downcase
+
+      if downcased.include?("today")
+        parse_relative_day(normalized, 0)
+      elsif downcased.include?("tomorrow")
+        parse_relative_day(normalized, 1)
+      elsif downcased.include?("yesterday")
+        parse_relative_day(normalized, -1)
+      elsif normalized.match?(/\A[a-z]+,\s*\d{1,2}(:\d{2})?\s*[ap]m\z/i)
+        parse_next_weekday(normalized)
+      elsif normalized.match?(/\A[a-z]+,\s*[a-z]{3,9}\s+\d{1,2}(,?\s+\d{1,2}(:\d{2})?\s*[ap]m)?\z/i)
+        DateTime.parse("#{normalized} #{Date.today.year}")
+      elsif normalized.match?(/\A[a-z]{3},\s*[a-z]{3}\s+\d{1,2}/i) # e.g. Fri, Feb 20
+        DateTime.parse("#{normalized} #{Date.today.year}")
+      elsif normalized.include?(",")
+        DateTime.parse(normalized)
       else # e.g. "Tuesday 8PM"
-        parse_next_weekday(date_str)
+        parse_next_weekday(normalized)
       end
+    end
+
+    def parse_relative_day(str, day_offset)
+      target_date = Date.today + day_offset
+      time = str[/(\d{1,2}(?::\d{2})?\s*[AP]M)/i, 1]
+      return DateTime.parse(target_date.to_s) if time.blank?
+      DateTime.parse("#{target_date} #{time}")
     end
 
     def parse_next_weekday(str)
@@ -80,8 +99,9 @@ class OReilleysPub
       # Get the current DateTime
       now = DateTime.now
 
-      # Extract the target weekday's number and the specified time (hours and minutes)
+      # Extract the target weekday's number
       weekday_name = weekday_map.keys.find { |k| str.downcase.include?(k.downcase) }
+      return nil if weekday_name.blank?
       target_weekday = weekday_map[weekday_name]
 
       # Calculate the difference in days to the next occurrence of the target weekday
@@ -90,7 +110,13 @@ class OReilleysPub
 
       # Calculate the next occurrence of the target weekday and time
       next_occurrence = now + days_difference
-      next_occurrence = DateTime.new(next_occurrence.year, next_occurrence.month, next_occurrence.day)
+      time = str[/(\d{1,2})(?::(\d{2}))?\s*([AP]M)/i, 0]
+      if time.present?
+        parsed_time = DateTime.parse(time)
+        next_occurrence = DateTime.new(next_occurrence.year, next_occurrence.month, next_occurrence.day, parsed_time.hour, parsed_time.min)
+      else
+        next_occurrence = DateTime.new(next_occurrence.year, next_occurrence.month, next_occurrence.day)
+      end
 
       next_occurrence
     end

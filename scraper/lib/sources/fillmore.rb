@@ -8,10 +8,12 @@ class Fillmore
   self.events_limit = 200
 
   MAIN_URL = "https://www.livenation.com/venue/KovZpZAE6eeA/the-fillmore-events"
+  EVENTS_WAIT_TIMEOUT = 15
 
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
     $driver.navigate.to(MAIN_URL)
     get_all_pages
+    wait_for_events
     get_events.map.with_index do |event, index|
       next if index >= events_limit
       parse_event_data(event, &foreach_event_blk)
@@ -22,8 +24,11 @@ class Fillmore
     private
 
     def get_events
-      $driver.css("div[role='group']").reject do |box|
-        box.text.empty?
+      events = $driver.css("[role='tabpanel'] div[role='group']")
+      events = $driver.css("div[role='group']") if events.empty?
+
+      events.select do |box|
+        box.text.present? && (box.css("time").present? || box.css("h2").present?)
       end
     end
 
@@ -41,12 +46,30 @@ class Fillmore
       # end
     end
 
+    def wait_for_events
+      wait = Selenium::WebDriver::Wait.new(timeout: EVENTS_WAIT_TIMEOUT)
+      wait.until { get_events.any? }
+    rescue Selenium::WebDriver::Error::TimeoutError
+      nil
+    end
+
     def parse_event_data(event, &foreach_event_blk)
+      date_node = event.css("time")[0]
+      date = DateTime.parse(date_node.attribute("datetime")) rescue nil
+      return if date.blank?
+
+      title = event.css("h2")[0]&.text&.strip
+      title = event.css(".chakra-heading")[0]&.text&.strip if title.blank?
+      return if title.blank?
+
+      link = event.css("a")[0]&.attribute("href")
+      link = MAIN_URL if link.blank?
+
       {
-        date: ((DateTime.parse(event.css("time")[0].attribute("datetime"))) rescue return),
-        url: event.css("a")[0].attribute("href"),
+        date: date,
+        url: link,
         img: parse_img(event),
-        title: event.css(".chakra-heading")[0].text,
+        title: title,
         details: "",
       }.
         tap { |data| Utils.print_event_preview(self, data) }.
@@ -58,9 +81,12 @@ class Fillmore
     def parse_img(event)
       # Some wierd shit. The images don't load until you scroll to them.
       # But there's a workaround.
-      img = event.css("img")[0].attribute("src")
+      img = event.css("img")[0]&.attribute("src").to_s
+      return "" if img.blank?
+
       if img.include?("data")
-        img = event.attribute("outerHTML").scan(/srcSet="([^"]+)"/)[0][0].split(",")[6].lstrip
+        src_set = event.attribute("outerHTML").scan(/srcSet="([^"]+)"/)[0]&.first
+        img = src_set.to_s.split(",")[6].to_s.lstrip
       end
       img
     rescue
