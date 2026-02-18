@@ -10,34 +10,53 @@ Offline web scraping for music venue events using Ruby, Firefox, and Selenium We
 
 ## Quick Start
 
-### 1. Run Setup Script
+### Option A: Local machine only
 
+1. Run setup:
 ```bash
 ruby setup.rb
 ```
 
-This will:
-- Verify Ruby is installed
-- Check for Firefox
-- Download and install Geckodriver
-- Install Ruby gems via Bundle
-- Create required directories (credentials, logs)
-- Set up `.env` file with GECKODRIVER_PATH
-
-### 2. Configure Environment (Optional)
-
+2. Configure environment (optional):
 ```bash
 cp .env.example .env
 # Edit .env with your settings (GCS credentials, etc.)
 ```
 
-### 3. Run the Scraper
-
+3. Run the scraper:
 ```bash
 # Run once
 bin/run_scraper
+```
 
-# Run with options
+### Option B: Sprite workflow (`sprite_setup.sh` + `setup.rb`)
+
+Use this when you want to run in a Sprite and already have local secrets/config files prepared.
+
+1. On your local machine, make sure these files exist in this repo:
+- `.env`
+- `credentials/credentials.json`
+
+2. Run:
+```bash
+./sprite_setup.sh
+```
+
+`sprite_setup.sh` does the following:
+- Creates/provisions the Sprite and checks out this repo
+- Copies local `.env` to `/home/sprite/ShowScraper_Standalone/.env` on the Sprite
+- Copies local `credentials/credentials.json` to `/home/sprite/ShowScraper_Standalone/credentials/credentials.json` on the Sprite
+- Runs `ruby setup.rb` on the Sprite in `/home/sprite/ShowScraper_Standalone`
+
+3. `setup.rb` then installs runtime dependencies on the Sprite:
+- Ensures Firefox is available
+- Installs Geckodriver and sets `GECKODRIVER_PATH`
+- Installs Ruby gems (`bundle install`)
+- Creates required directories (`credentials`, `logs`)
+
+4. Run the scraper (locally or on the Sprite as needed):
+
+```bash
 bin/run_scraper --limit 50
 bin/run_scraper --sources DnaLounge,Fillmore
 bin/run_scraper --headless false
