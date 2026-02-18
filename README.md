@@ -43,7 +43,7 @@ Use this when you want to run in a Sprite and already have local secrets/config 
 ```
 
 `sprite_setup.sh` does the following:
-- Creates/provisions the Sprite and checks out this repo
+- Clones this repo onto the target Sprite (`SPRITE_NAME`, default: `show-scraper`)
 - Copies local `.env` to `/home/sprite/ShowScraper_Standalone/.env` on the Sprite
 - Copies local `credentials/credentials.json` to `/home/sprite/ShowScraper_Standalone/credentials/credentials.json` on the Sprite
 - Runs `ruby setup.rb` on the Sprite in `/home/sprite/ShowScraper_Standalone`
