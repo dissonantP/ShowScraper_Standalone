@@ -42,6 +42,7 @@ class SetupScript
 
   def check_firefox
     print "Checking Firefox... "
+    ensure_firefox_deps if linux?
     begin
       output, status = Open3.capture2('firefox --version')
       if status.success?
@@ -53,6 +54,25 @@ class SetupScript
 
     puts "not found, downloading..."
     install_firefox_binary
+    ensure_firefox_deps if linux?
+  end
+
+  def ensure_firefox_deps
+    # Ensure shared libs needed for the bundled Firefox on Linux
+    return unless linux?
+
+    pkgs = %w[
+      libgtk-3-0t64
+      libx11-xcb1
+      libasound2t64
+    ]
+
+    system("sudo apt-get update -y > /dev/null 2>&1")
+    system("sudo apt-get install -y #{pkgs.join(' ')} > /dev/null 2>&1")
+  end
+
+  def linux?
+    `uname -s`.strip.downcase == 'linux'
   end
 
   def install_firefox_binary
