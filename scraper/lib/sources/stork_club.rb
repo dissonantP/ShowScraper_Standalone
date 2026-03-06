@@ -8,6 +8,7 @@ class StorkClub
 
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
     $driver.get(MAIN_URL)
+    wait_for_calendar_events!
     get_events.map.with_index do |(month_node, event), index|
       next if index >= events_limit
       parse_event_data(month_node, event, &foreach_event_blk)
@@ -16,6 +17,14 @@ class StorkClub
 
   class << self
     private
+
+    def wait_for_calendar_events!
+      wait = Selenium::WebDriver::Wait.new(timeout: load_time)
+      wait.until { $driver.css(".seetickets-calendar-event-container").any? }
+    rescue Selenium::WebDriver::Error::TimeoutError
+      # Continue and let normal empty-source warning handle truly empty calendars.
+      nil
+    end
 
     def get_events
       # resize the window so we get the better-organized calendar view
