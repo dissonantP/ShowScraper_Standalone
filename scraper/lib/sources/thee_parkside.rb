@@ -5,6 +5,8 @@ class TheeParkside
   MAIN_URL = "https://www.theeparkside.com/live-music-2"
   GRAPHQL_URL = "https://www.venuepilot.co/graphql"
   PROXY_URL = "https://cvgpjtvvxhdinrszyykk.supabase.co/functions/v1/fetch-proxy"
+  # Venue is closing; keep adapter present but skip it in scheduled runs.
+  DISABLED = true
   ACCOUNT_ID = 2883
   GRAPHQL_QUERY = <<~GRAPHQL.freeze
     query ($accountIds: [Int!]!, $startDate: String!, $endDate: String, $search: String, $searchScope: String, $limit: Int, $page: Int) {

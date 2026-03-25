@@ -4,7 +4,6 @@ require "faraday"
 class IvyRoom
   MAIN_URL = "https://www.ivyroom.com/calendar?view=calendar"
   GRAPHQL_URL = "https://www.venuepilot.co/graphql"
-  PROXY_URL = "https://cvgpjtvvxhdinrszyykk.supabase.co/functions/v1/fetch-proxy"
   ACCOUNT_ID = 992
   GRAPHQL_QUERY = <<~GRAPHQL.freeze
     query ($accountIds: [Int!]!, $startDate: String!, $endDate: String, $search: String, $searchScope: String, $limit: Int, $page: Int) {
@@ -72,10 +71,20 @@ class IvyRoom
     private
 
     def fetch_events_page(page:)
-      proxy_key = ENV["PROXY_SERVICE_KEY"].presence
-      raise "IvyRoom missing PROXY_SERVICE_KEY env var" unless proxy_key
-
-      graphql_body = {
+      response = Faraday.post(GRAPHQL_URL) do |req|
+        req.headers["accept"] = "*/*"
+        req.headers["accept-language"] = "en-US,en;q=0.9"
+        req.headers["content-type"] = "application/json"
+        req.headers["priority"] = "u=1, i"
+        req.headers["sec-ch-ua"] = "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Brave\";v=\"144\""
+        req.headers["sec-ch-ua-mobile"] = "?0"
+        req.headers["sec-ch-ua-platform"] = "\"macOS\""
+        req.headers["sec-fetch-dest"] = "empty"
+        req.headers["sec-fetch-mode"] = "cors"
+        req.headers["sec-fetch-site"] = "cross-site"
+        req.headers["sec-gpc"] = "1"
+        req.headers["referer"] = "https://www.ivyroom.com/"
+        req.body = {
         operationName: nil,
         variables: {
           accountIds: [ACCOUNT_ID],
@@ -87,37 +96,10 @@ class IvyRoom
         },
         query: GRAPHQL_QUERY
       }.to_json
-
-      request_body = {
-        url: GRAPHQL_URL,
-        options: {
-          method: "POST",
-          headers: {
-            "accept" => "*/*",
-            "accept-language" => "en-US,en;q=0.9",
-            "content-type" => "application/json",
-            "priority" => "u=1, i",
-            "sec-ch-ua" => "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Brave\";v=\"144\"",
-            "sec-ch-ua-mobile" => "?0",
-            "sec-ch-ua-platform" => "\"macOS\"",
-            "sec-fetch-dest" => "empty",
-            "sec-fetch-mode" => "cors",
-            "sec-fetch-site" => "cross-site",
-            "sec-gpc" => "1",
-            "referer" => "https://www.ivyroom.com/"
-          },
-          body: graphql_body
-        }
-      }.to_json
-
-      response = Faraday.post(PROXY_URL) do |req|
-        req.headers["content-type"] = "application/json"
-        req.headers["authorization"] = "Bearer #{proxy_key}"
-        req.body = request_body
       end
 
       unless response.success?
-        raise "IvyRoom proxy request failed (#{response.status}): #{response.body}"
+        raise "IvyRoom GraphQL request failed (#{response.status}): #{response.body}"
       end
 
       parsed = JSON.parse(response.body)

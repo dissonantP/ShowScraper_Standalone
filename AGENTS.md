@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Local Instructions
+
+- Do not create Sprite checkpoints for this repository unless the user explicitly asks for one.
+
 ## Purpose
 
 This repository is a standalone Ruby scraper that collects upcoming live-music events from many venue websites, normalizes them into a shared event shape, and writes one JSON file per venue to Google Cloud Storage (GCS).
