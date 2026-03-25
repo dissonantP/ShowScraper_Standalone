@@ -420,6 +420,16 @@
       "img": "https://oaklandnorth.net/wp-content/uploads/2010/06/newparish.jpg"
     },
     {
+      "name": "Kilowatt",
+      "commonName": "Kilowatt",
+      "website": "https://kilowattbar.com/events",
+      "region": "San Francisco",
+      "mapLink": "",
+      "latlng": "37.76506, -122.42325",
+      "desc": "Mission bar and live-music venue with frequent punk, indie, DJ nights, and karaoke events.",
+      "img": "https://static1.squarespace.com/static/63db2d061a225958e4bc286b/t/65668abaab4ae045ef5228db/1701219002571/Reddy+Logo.png?format=1500w"
+    },
+    {
       "name": "StorkClub",
       "commonName": "Thee Stork Club",
       "website": "https://theestorkclub.com/",

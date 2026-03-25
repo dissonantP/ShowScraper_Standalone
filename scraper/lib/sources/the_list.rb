@@ -102,6 +102,7 @@ class TheList
         "Paramount",
         "Fox Theater",
         "Great Northern",
+        "Kilowatt",
         "New Parish",
         "Stork Club",
         "Wyldflowr",
