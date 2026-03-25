@@ -420,6 +420,16 @@
       "img": "https://oaklandnorth.net/wp-content/uploads/2010/06/newparish.jpg"
     },
     {
+      "name": "NeckOfTheWoods",
+      "commonName": "Neck Of The Woods",
+      "website": "https://www.neckofthewoodssf.com/",
+      "region": "San Francisco",
+      "mapLink": "",
+      "latlng": "37.7831255, -122.4637116",
+      "desc": "Richmond District venue hosting live music, comedy, open mics, karaoke and dance nights.",
+      "img": "https://www.neckofthewoodssf.com/wp-content/uploads/2023/05/Neck-of-the-woods-logo1.png"
+    },
+    {
       "name": "Kilowatt",
       "commonName": "Kilowatt",
       "website": "https://kilowattbar.com/events",

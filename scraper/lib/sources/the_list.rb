@@ -104,6 +104,7 @@ class TheList
         "Great Northern",
         "Kilowatt",
         "New Parish",
+        "Next of the Woods",
         "Stork Club",
         "Wyldflowr",
       ].map do |known_venue|
