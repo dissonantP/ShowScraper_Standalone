@@ -42,6 +42,10 @@ The runtime is intentionally simple:
   - Thin wrapper around `google-cloud-storage`.
   - Uploads `sources.json` and `<SourceClass>.json` outputs.
 
+- `scraper/lib/sources/manually_added.rb`
+  - Preserve-only adapter for backend-managed manual shows.
+  - Reads the already-published `ManuallyAdded.json` from GCS so scraper runs do not overwrite manual entries with an empty array.
+
 - `scraper/lib/selenium_patches.rb`
   - Monkey patches Selenium element/driver to add convenience helpers (`css`, `new_tab`, hidden text extraction behavior).
 

@@ -1,21 +1,35 @@
 class ManuallyAdded
 
   def self.run(events_limit: 0, &foreach_event_blk)
-    return [
-      # {
-      #   url: "https://lh3.googleusercontent.com/pw/AJFCJaWdEwKVNXKhm1dNmARRslQAqqhJyIUbJ93Ao3-8x3K-UdOrK3l1LuxjmCrJ1jW8TIdBxhu9yzc40nieSWMpz14caAcyUvSNrzgQ4xraWBDuJAv1X39UdupxgtDFL30p00dFZx62hD0V8OrOuyo6hSSFSA=w707-h884-s-no?authuser=0",
-      #   img: "https://lh3.googleusercontent.com/pw/AJFCJaWdEwKVNXKhm1dNmARRslQAqqhJyIUbJ93Ao3-8x3K-UdOrK3l1LuxjmCrJ1jW8TIdBxhu9yzc40nieSWMpz14caAcyUvSNrzgQ4xraWBDuJAv1X39UdupxgtDFL30p00dFZx62hD0V8OrOuyo6hSSFSA=w707-h884-s-no?authuser=0",
-      #   date: DateTime.parse("May 19 2023"),
-      #   title: {
-      #     artists: "AAPI Goth Gala - Music, Drag, and Vendors. Half Rotten Goddess, Pretty Frankenstein, Space Kadets, Drag Performers",
-      #     venue: "The Red Door in Alameda - 2309 Encinal Ave"
-      #   }.to_json,
-      #   details: ""
-      # }
-    ].map do |event|
+    load_existing_events.map do |event|
       event.
         tap { |data| Utils.print_event_preview(self, data) }.
         tap { |data| foreach_event_blk&.call(data) }
     end
+  end
+
+  def self.load_existing_events
+    return [] if GCS.nil?
+
+    raw = GCS.download_file_as_text(source: "ManuallyAdded.json").to_s
+    return [] if raw.blank?
+
+    parsed = JSON.parse(raw)
+    unless parsed.is_a?(Array)
+      puts "WARNING: ManuallyAdded.json did not contain a JSON array; preserving nothing"
+      return []
+    end
+
+    parsed.filter_map do |event|
+      next unless event.is_a?(Hash)
+
+      event.deep_symbolize_keys
+    end
+  rescue JSON::ParserError => e
+    puts "WARNING: failed to parse ManuallyAdded.json: #{e.message}"
+    []
+  rescue => e
+    puts "WARNING: failed to load ManuallyAdded.json from GCS: #{e.class} #{e.message}"
+    []
   end
 end
