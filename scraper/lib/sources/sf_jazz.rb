@@ -1,17 +1,16 @@
+require "faraday"
 require "uri"
 
 class SfJazz
   MAIN_URL = "https://www.sfjazz.org/calendar/"
+  MIRROR_PREFIX = "https://r.jina.ai/http://"
   DEFAULT_IMG = "https://ybgfestival.org/wp-content/uploads/2014/03/sfjazz-logo-21-300x300-300x300.jpg"
 
   cattr_accessor :events_limit
   self.events_limit = 200
 
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
-    $driver.navigate.to(MAIN_URL)
-    wait_for_events!
-
-    get_events.first(events_limit).map do |event|
+    fetch_events.first(events_limit).map do |event|
       parse_event_data(event, &foreach_event_blk)
     end.compact
   end
@@ -19,38 +18,24 @@ class SfJazz
   class << self
     private
 
-    def wait_for_events!
-      20.times do
-        events = get_events
-        return if events.any?
-        sleep 0.5
-      end
-
-      raise "SfJazz calendar events did not load"
-    end
-
-    def get_events
-      $driver.css(".ace-cal-list-event")
+    def fetch_events
+      extract_calendar_events(fetch_markdown(MAIN_URL)).
+        sort_by { |event| event[:date] }.
+        uniq { |event| [event[:url], event[:date], event[:title]] }
+    rescue Faraday::Error => e
+      raise "SfJazz mirror request failed: #{e.message}"
     end
 
     def parse_event_data(event, &foreach_event_blk)
-      title = event.css(".ace-cal-list-event-details h4").first&.text.to_s.strip
+      title = event[:title].to_s.strip
       return if title.blank?
 
-      link =
-        event.css(".ace-cal-list-event-details a").first ||
-        event.css(".ace-cal-list-event-image a").first
-
-      img = event.css(".ace-cal-list-event-image img").first&.attribute("src").presence || DEFAULT_IMG
-      date = parse_date(event)
-      details = event.css(".ace-cal-list-event-time").first&.text.to_s.squish
-
       {
-        url: absolutize_url(link&.attribute("href").presence || MAIN_URL),
-        img: absolutize_url(img),
-        date: date,
-        title: title,
-        details: details
+        url: absolutize_url(event[:url].presence || MAIN_URL),
+        img: absolutize_url(event[:img].presence || DEFAULT_IMG),
+        date: event[:date],
+        title: title.gsub(/\s{2,}/, " "),
+        details: event[:details].to_s.strip
       }.
         tap { |data| Utils.print_event_preview(self, data) }.
         tap { |data| foreach_event_blk&.call(data) }
@@ -58,13 +43,58 @@ class SfJazz
       ENV["DEBUGGER"] == "true" ? binding.pry : raise
     end
 
-    def parse_date(event)
-      month_day = event.css(".ace-cal-list-day-of-month").first&.text.to_s.squish
-      raise "SfJazz missing event date" if month_day.blank?
+    def fetch_markdown(url)
+      response = Faraday.get("#{MIRROR_PREFIX}#{url}") do |req|
+        req.options.timeout = 20
+        req.options.open_timeout = 10
+        req.headers["accept"] = "text/plain, text/markdown;q=0.9, */*;q=0.8"
+      end
 
-      candidate = DateTime.parse("#{month_day} #{Date.today.year}")
-      candidate = candidate.next_year if candidate.to_date < Date.today - 31
-      candidate
+      unless response.success?
+        raise "SfJazz mirror returned #{response.status} for #{url}"
+      end
+
+      response.body
+    end
+
+    def extract_calendar_events(markdown)
+      current_date = nil
+      year = Date.today.year
+
+      markdown.lines.map(&:strip).filter_map do |line|
+        date_text = line[/\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+[A-Z][a-z]{2}\s+\d{1,2}\b/]
+        if date_text.present?
+          current_date = DateTime.parse("#{date_text} #{year}")
+          current_date = current_date.next_year if current_date.to_date < Date.today - 31
+          next
+        end
+
+        match = line.match(%r{\[!\[Image \d+(?:: [^\]]+)?\]\((https://www\.sfjazz\.org/media/[^)]+)\)\]\((https://www\.sfjazz\.org/[^)]+)\)})
+        next unless match && current_date
+
+        img, url = match.captures
+        {
+          url: url,
+          img: img,
+          date: current_date,
+          title: title_from_url(url),
+          details: details_from_url(url)
+        }
+      end
+    end
+
+    def title_from_url(url)
+      slug = URI(url).path.split("/").reject(&:blank?).last.to_s
+      slug.tr("-", " ").squish.titleize
+    rescue
+      "SFJAZZ Event"
+    end
+
+    def details_from_url(url)
+      return "At Home" if url.include?("/athome/")
+      return "Education" if url.include?("/education/")
+
+      ""
     end
 
     def absolutize_url(url)
