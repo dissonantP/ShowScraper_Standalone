@@ -71,6 +71,19 @@ class IvyRoom
     private
 
     def fetch_events_page(page:)
+      graphql_body = {
+        operationName: nil,
+        variables: {
+          accountIds: [ACCOUNT_ID],
+          startDate: Date.today.strftime("%Y-%m-%d"),
+          endDate: nil,
+          search: "",
+          searchScope: "",
+          page: page
+        },
+        query: GRAPHQL_QUERY
+      }.to_json
+
       response = Faraday.post(GRAPHQL_URL) do |req|
         req.headers["accept"] = "*/*"
         req.headers["accept-language"] = "en-US,en;q=0.9"
@@ -84,18 +97,7 @@ class IvyRoom
         req.headers["sec-fetch-site"] = "cross-site"
         req.headers["sec-gpc"] = "1"
         req.headers["referer"] = "https://www.ivyroom.com/"
-        req.body = {
-        operationName: nil,
-        variables: {
-          accountIds: [ACCOUNT_ID],
-          startDate: Date.today.strftime("%Y-%m-%d"),
-          endDate: nil,
-          search: "",
-          searchScope: "",
-          page: page
-        },
-        query: GRAPHQL_QUERY
-      }.to_json
+        req.body = graphql_body
       end
 
       unless response.success?
