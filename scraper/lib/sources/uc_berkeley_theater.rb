@@ -1,5 +1,5 @@
 class UCBerkeleyTheater
-  MAIN_URL = "https://theuctheatre.org/events"
+  MAIN_URL = "https://www.theuctheatre.org/"
 
   cattr_accessor :events_limit, :load_time
   self.events_limit = 200
@@ -43,8 +43,9 @@ class UCBerkeleyTheater
     end
 
     def parse_title(event)
-      main_title = event.css(".name-listing")[0].text.strip
-      support = event.css(".support-listing")[0]&.text&.strip
+      main_title = event.css(".headliner-listing")[0]&.text&.strip
+      main_title = event.css(".name-listing")[0]&.text&.strip if main_title.blank?
+      support = event.css(".support-listing")[0]&.text&.strip.presence
       support ? "#{main_title}, #{support}" : main_title
     end
 
