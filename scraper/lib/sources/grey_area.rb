@@ -1,5 +1,6 @@
 class GreyArea
   MAIN_URL = "https://grayarea.org/events/"
+  EVENT_LIST_SELECTOR = ".featured-items .item-link"
 
   cattr_accessor :events_limit
   self.events_limit = 200
@@ -16,7 +17,7 @@ class GreyArea
 
     def get_events
       $driver.navigate.to(MAIN_URL)
-      $driver.css(".featured-items")[0].css(".item-link")
+      $driver.css(EVENT_LIST_SELECTOR)
     end
 
     def parse_event_data(event, &foreach_event_blk)
@@ -37,7 +38,7 @@ class GreyArea
     def parse_img(event)
       style = event.css(".image")[0]&.attribute("style")
       return "" unless style
-      style.scan(/url\(([^)]+)\)/)[0][0]
+      style[/url\((['"]?)(.+?)\1\)/, 2].to_s
     end
   end
 end
