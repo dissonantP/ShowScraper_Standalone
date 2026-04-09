@@ -132,6 +132,7 @@ def quit!; Utils.quit! end
 
 class Scraper
   SOURCE_LIST_JSON = "#{__dir__}/../sources.json"
+  RETRYABLE_SOURCES = %w[ElisMileHighClub GreyArea Knockout]
 
   SOURCES = JSON.parse(File.read(SOURCE_LIST_JSON)).map { |source| source["name"].constantize }
 
@@ -306,6 +307,27 @@ end
       Timeout.timeout(60 * 3) do
         source.run(**{ events_limit: events_limit }.compact, &foreach_event_blk)
       end
+    rescue => e
+      raise unless retryable_source?(source)
+      raise if Thread.current[:scraper_retried_source] == source.name
+
+      Thread.current[:scraper_retried_source] = source.name
+      reset_driver!
+      retry
+    ensure
+      Thread.current[:scraper_retried_source] = nil if Thread.current[:scraper_retried_source] == source.name
+    end
+
+    def retryable_source?(source)
+      RETRYABLE_SOURCES.include?(source.name)
+    end
+
+    def reset_driver!
+      $driver&.quit
+    rescue StandardError
+      nil
+    ensure
+      $driver = init_driver
     end
 
   end

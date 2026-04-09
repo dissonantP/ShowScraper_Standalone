@@ -9,9 +9,11 @@ class Fillmore
 
   MAIN_URL = "https://www.livenation.com/venue/KovZpZAE6eeA/the-fillmore-events"
   EVENTS_WAIT_TIMEOUT = 15
+  EVENT_SCHEMA_SELECTOR = 'script[type="application/ld+json"]'
 
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
     $driver.navigate.to(MAIN_URL)
+    @page_event_urls = nil
     get_all_pages
     wait_for_events
     get_events.map.with_index do |event, index|
@@ -63,6 +65,7 @@ class Fillmore
       return if title.blank?
 
       link = event.css("a")[0]&.attribute("href")
+      link = lookup_event_url(date: date, title: title) if link.blank?
       link = MAIN_URL if link.blank?
 
       {
@@ -91,6 +94,29 @@ class Fillmore
       img
     rescue
       ""
+    end
+
+    def lookup_event_url(date:, title:)
+      page_event_urls[[normalize_title(title), date.strftime("%Y-%m-%d")]]
+    end
+
+    def page_event_urls
+      @page_event_urls ||= $driver.css(EVENT_SCHEMA_SELECTOR).each_with_object({}) do |script, urls|
+        payload = JSON.parse(script.attribute("innerHTML")) rescue nil
+        next unless payload.is_a?(Hash)
+        next unless payload["@type"] == "MusicEvent"
+
+        start_date = payload["startDate"].to_s.slice(0, 10)
+        event_title = normalize_title(payload["name"])
+        event_url = payload["url"].presence
+        next if start_date.blank? || event_title.blank? || event_url.blank?
+
+        urls[[event_title, start_date]] = event_url
+      end
+    end
+
+    def normalize_title(title)
+      title.to_s.squish.downcase
     end
   end
 end
