@@ -460,6 +460,16 @@
       "img": "https://pbs.twimg.com/media/D7TjIXEU0AA2rGu?format=jpg&name=large"
     },
     {
+      "name": "Indybay",
+      "commonName": "Indybay",
+      "website": "https://www.indybay.org/calendar/",
+      "region": "Other",
+      "mapLink": "",
+      "latlng": "",
+      "desc": "Bay Area community calendar feed used here as a general event source.",
+      "img": ""
+    },
+    {
       "name": "ManuallyAdded",
       "commonName": "Manually Added",
       "website": "http://dissonant.info",
