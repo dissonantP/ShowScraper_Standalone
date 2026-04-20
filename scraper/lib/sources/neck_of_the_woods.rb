@@ -1,5 +1,5 @@
 require "nokogiri"
-require "open-uri"
+require "open3"
 
 class NeckOfTheWoods
   MAIN_URL = "https://www.neckofthewoodssf.com/"
@@ -35,9 +35,10 @@ class NeckOfTheWoods
     private
 
     def fetch_page(page)
-      Nokogiri.parse(
-        URI.open(page_url(page), "User-Agent" => "Mozilla/5.0").read
-      )
+      html, status = Open3.capture2("curl", "-sL", "--max-time", "25", page_url(page))
+      raise "NeckOfTheWoods page fetch failed for #{page_url(page)}" unless status.success?
+
+      Nokogiri::HTML(html)
     end
 
     def page_url(page)

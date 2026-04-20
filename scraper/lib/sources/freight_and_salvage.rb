@@ -1,9 +1,9 @@
 require "faraday"
+require "open3"
 
 class FreightAndSalvage
   MAIN_URL = "https://thefreight.org/shows/"
-  JAMBASE_URL = "https://www.jambase.com/venue/the-freight-berkeley-ca"
-  MIRROR_PREFIX = "https://r.jina.ai/http://"
+  MIRROR_URL = "https://r.jina.ai/http://https://thefreight.org/"
 
   cattr_accessor :events_limit, :load_time
   self.events_limit = 200
@@ -19,46 +19,41 @@ class FreightAndSalvage
     private
 
     def fetch_events
-      lines = fetch_markdown.lines.map(&:strip)
-      current_date = nil
+      upcoming_section = fetch_markdown.split("## Upcoming Shows\n", 2)[1].to_s
 
-      lines.filter_map do |line|
-        date_match = line.match(/\A\*\s+([A-Z][a-z]{2}\s+\d{1,2},\s+\d{4})\z/)
-        if date_match
-          current_date = DateTime.parse(date_match[1])
-          next
-        end
-
-        next unless current_date
-
-        match = line.match(%r{\A\*\s+\[!\[Image \d+:? ?([^\]]*)\]\((https://[^)]+)\)\]\((https://www\.jambase\.com/show/[^)]+)\)(?:\s+####\s+\[([^\]]+)\]\([^)]+\))?})
-        next unless match
-
-        alt_title, img, url, linked_title = match.captures
-        title = linked_title.presence || alt_title.presence || "Freight Event"
-
-        {
-          date: current_date,
-          img: img,
-          title: title,
-          url: url,
-          details: ""
-        }
-      end
+      upcoming_section
+        .split(/\n(?=\[!\[Image )/)
+        .filter_map { |block| parse_event_block(block) }
     end
 
     def fetch_markdown
-      response = Faraday.get("#{MIRROR_PREFIX}#{JAMBASE_URL}") do |req|
-        req.options.timeout = 20
-        req.options.open_timeout = 10
-        req.headers["accept"] = "text/plain, text/markdown;q=0.9, */*;q=0.8"
-      end
+      output, status = Open3.capture2("curl", "-sL", "--max-time", "25", MIRROR_URL)
+      raise "FreightAndSalvage mirror fetch failed" unless status.success?
+      raise "FreightAndSalvage mirror did not include Upcoming Shows" unless output.include?("## Upcoming Shows")
 
-      unless response.success?
-        raise "FreightAndSalvage mirror returned #{response.status}"
-      end
+      output
+    end
 
-      response.body
+    def parse_event_block(block)
+      return if block.blank?
+      return if block.include?("CANCELED")
+
+      img, url = block.match(/\[!\[Image \d+\]\((.*?)\)\]\((https:\/\/secure\.thefreight\.org\/[^)]+)\)/m)&.captures
+      title = block[/## \[(.*?)\]\(https:\/\/secure\.thefreight\.org\/[^)]+\)/m, 1].to_s.strip
+      date_match = block.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+([A-Za-z]{3})\s+(\d{1,2})(?:st|nd|rd|th)\s+(\d{4}).*?Show:\s*(\d{1,2}:\d{2}\s*[AP]M)/m)
+
+      return if title.blank? || date_match.blank?
+
+      _weekday, month, day, year, show_time = date_match.captures
+      date = DateTime.parse("#{month} #{day} #{year} #{show_time}")
+
+      {
+        date: date,
+        img: img.to_s,
+        title: title,
+        url: url,
+        details: ""
+      }
     end
 
     def parse_event_data(event, &foreach_event_blk)
