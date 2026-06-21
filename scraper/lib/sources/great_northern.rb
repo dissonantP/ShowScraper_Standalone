@@ -1,6 +1,7 @@
 class GreatNorthern
   # Single page!!
   MAIN_URL = "https://www.thegreatnorthernsf.com"
+  EVENTS_WAIT_TIMEOUT = 10
 
   cattr_accessor :events_limit, :load_time
   self.events_limit = 200
@@ -9,10 +10,9 @@ class GreatNorthern
   def self.run(events_limit: self.events_limit, &foreach_event_blk)
     $driver.get(MAIN_URL)
 
-    # the whole fn calendar is in an iframe ... lovely
-    sleep self.load_time
-    $driver.navigate.to $driver.css("iframe")[0].attribute("src")
-    sleep self.load_time
+    # The Eventbrite listing lives in an iframe and can load slowly.
+    $driver.navigate.to embedded_events_url
+    wait_for_events
 
     get_events.map.with_index do |event, index|
       next if index >= events_limit
@@ -23,8 +23,22 @@ class GreatNorthern
   class << self
     private
 
+    def embedded_events_url
+      wait.until do
+        $driver.css("iframe").map { |frame| frame.attribute("src") }.find(&:present?)
+      end
+    end
+
     def get_events
       $driver.css(".event.row")
+    end
+
+    def wait_for_events
+      wait.until { get_events.any? }
+    end
+
+    def wait
+      Selenium::WebDriver::Wait.new(timeout: EVENTS_WAIT_TIMEOUT)
     end
 
     def parse_event_data(event, &foreach_event_blk)
