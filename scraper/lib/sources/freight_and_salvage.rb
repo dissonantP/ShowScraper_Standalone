@@ -1,9 +1,10 @@
 require "faraday"
-require "open3"
+require "json"
+require "nokogiri"
 
 class FreightAndSalvage
-  MAIN_URL = "https://thefreight.org/shows/"
-  MIRROR_URL = "https://r.jina.ai/http://https://thefreight.org/"
+  MAIN_URL = "https://secure.thefreight.org/events?view=list"
+  API_URL = "https://secure.thefreight.org/api/products/productionseasons"
 
   cattr_accessor :events_limit, :load_time
   self.events_limit = 200
@@ -19,41 +20,57 @@ class FreightAndSalvage
     private
 
     def fetch_events
-      upcoming_section = fetch_markdown.split("## Upcoming Shows\n", 2)[1].to_s
+      fetch_productions.flat_map do |production|
+        Array(production["performances"]).filter_map do |performance|
+          next unless performance["isPerformanceVisible"]
 
-      upcoming_section
-        .split(/\n(?=\[!\[Image )/)
-        .filter_map { |block| parse_event_block(block) }
+          parse_event(production, performance)
+        end
+      end
     end
 
-    def fetch_markdown
-      output, status = Open3.capture2("curl", "-sL", "--max-time", "25", MIRROR_URL)
-      raise "FreightAndSalvage mirror fetch failed" unless status.success?
-      raise "FreightAndSalvage mirror did not include Upcoming Shows" unless output.include?("## Upcoming Shows")
+    def fetch_productions
+      response = Faraday.post(API_URL) do |req|
+        req.headers["RequestVerificationToken"] = fetch_request_verification_token
+        req.headers["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
+        req.body = URI.encode_www_form(
+          startDate: Date.today.iso8601,
+          endDate: Date.today.next_year.iso8601
+        )
+      end
 
-      output
+      raise "FreightAndSalvage API fetch failed: #{response.status}" unless response.success?
+
+      JSON.parse(response.body)
     end
 
-    def parse_event_block(block)
-      return if block.blank?
-      return if block.include?("CANCELED")
+    def fetch_request_verification_token
+      response = Faraday.get(MAIN_URL)
+      raise "FreightAndSalvage list page fetch failed: #{response.status}" unless response.success?
 
-      img, url = block.match(/\[!\[Image \d+\]\((.*?)\)\]\((https:\/\/[^)]+)\)/m)&.captures
-      title = block[/## \[(.*?)\]\(https:\/\/[^)]+\)/m, 1].to_s.strip
-      date_match = block.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+([A-Za-z]{3})\s+(\d{1,2})(?:st|nd|rd|th)\s+(\d{4}).*?Show:\s*(\d{1,2}:\d{2}\s*[AP]M)/m)
+      token = Nokogiri::HTML(response.body).at_css('input[name="__RequestVerificationToken"]')&.[]("value")
+      raise "FreightAndSalvage request verification token missing" if token.blank?
 
-      return if title.blank? || date_match.blank?
+      token
+    end
 
-      _weekday, month, day, year, show_time = date_match.captures
-      date = DateTime.parse("#{month} #{day} #{year} #{show_time}")
-
+    def parse_event(production, performance)
       {
-        date: date,
-        img: img.to_s,
-        title: title,
-        url: url,
+        date: DateTime.parse(performance["performanceDate"] || performance["iso8601DateString"]),
+        img: production["listingImageUrl"].to_s,
+        title: extract_title(performance),
+        url: performance["actionUrl"].presence || production["productionSeasonActionUrl"],
         details: ""
       }
+    end
+
+    def extract_title(performance)
+      Nokogiri::HTML.fragment(performance["performanceTitle"].to_s)
+        .xpath(".//text()")
+        .map(&:text)
+        .join(" ")
+        .gsub(/\s+/, " ")
+        .strip
     end
 
     def parse_event_data(event, &foreach_event_blk)
