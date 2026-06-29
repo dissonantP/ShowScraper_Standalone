@@ -105,6 +105,7 @@ class TheList
         "Kilowatt",
         "New Parish",
         "Next of the Woods",
+        "Siesta Valley Bowl",
         "Stork Club",
         "Wyldflowr",
       ].map do |known_venue|
