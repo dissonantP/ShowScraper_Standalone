@@ -6,6 +6,8 @@ class SfJazz
   MIRROR_PREFIX = "https://r.jina.ai/http://"
   DEFAULT_IMG = "https://ybgfestival.org/wp-content/uploads/2014/03/sfjazz-logo-21-300x300-300x300.jpg"
   CALENDAR_MONTHS_AHEAD = 12
+  MIRROR_RETRY_STATUSES = [429, 500, 502, 503, 504].freeze
+  MIRROR_MAX_ATTEMPTS = 3
 
   cattr_accessor :events_limit
   self.events_limit = 200
@@ -29,9 +31,7 @@ class SfJazz
     end
 
     def fetch_calendar_markdowns
-      calendar_urls.map do |url|
-        Thread.new { fetch_markdown(url) }
-      end.map(&:value)
+      calendar_urls.map { |url| fetch_markdown(url) }
     end
 
     def calendar_urls
@@ -57,10 +57,17 @@ class SfJazz
     end
 
     def fetch_markdown(url)
-      response = Faraday.get("#{MIRROR_PREFIX}#{url}") do |req|
-        req.options.timeout = 20
-        req.options.open_timeout = 10
-        req.headers["accept"] = "text/plain, text/markdown;q=0.9, */*;q=0.8"
+      response = nil
+      MIRROR_MAX_ATTEMPTS.times do |attempt|
+        response = Faraday.get("#{MIRROR_PREFIX}#{url}") do |req|
+          req.options.timeout = 20
+          req.options.open_timeout = 10
+          req.headers["accept"] = "text/plain, text/markdown;q=0.9, */*;q=0.8"
+        end
+
+        break if response.success? || !MIRROR_RETRY_STATUSES.include?(response.status)
+
+        sleep(2**attempt)
       end
 
       unless response.success?
