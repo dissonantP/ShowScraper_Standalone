@@ -5,7 +5,7 @@ SPRITE_NAME="${SPRITE_NAME:-show-scraper}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_DIR="/home/sprite/ShowScraper_Standalone"
 
-sprite exec -s $SPRITE_NAME git clone git@github.com:dissonantP/ShowScraper_Standalone.git
+sprite exec -s $SPRITE_NAME git clone git@github.com:proteanP/ShowScraper_Standalone.git
 # Copy .env
 echo "==> Copying .env"
 sprite exec -s $SPRITE_NAME -file "$DIR/.env:$REMOTE_DIR/.env" true
