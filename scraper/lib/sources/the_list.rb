@@ -108,6 +108,8 @@ class TheList
         "Siesta Valley Bowl",
         "Stork Club",
         "Wyldflowr",
+        "Black Cat",
+        "Black Cat Jazz Supper Club",
       ].map do |known_venue|
         known_venue.downcase.gsub(/[^0-9a-z ]/i, '')
       end
