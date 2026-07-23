@@ -200,6 +200,16 @@
       "img": "https://thelostchurch.org/app/uploads/2024/06/TLC_sanfran2021_RGB.png"
     },
     {
+      "name": "MabuhayGardens",
+      "commonName": "Mabuhay Gardens",
+      "website": "https://themab.org/",
+      "region": "San Francisco",
+      "mapLink": "",
+      "latlng": "37.7980600, -122.4044868",
+      "desc": "Revived North Beach venue at the historic Mabuhay Gardens and On Broadway building, hosting punk, live music, dance, comedy, and cultural events.",
+      "img": "https://themab.org/wp-content/uploads/2025/09/fab-mab-1-1.png"
+    },
+    {
       "name": "Fillmore",
       "commonName": "Fillmore",
       "website": "https://www.livenation.com/venue/KovZpZAE6eeA/the-fillmore-events",

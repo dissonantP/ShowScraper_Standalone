@@ -115,6 +115,8 @@ class TheList
         "1015 Folsom",
         "The Lost Church",
         "The Planetarium",
+        "Mabuhay Gardens",
+        "The Mab",
       ].map do |known_venue|
         known_venue.downcase.gsub(/[^0-9a-z ]/i, '')
       end
