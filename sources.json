@@ -50,6 +50,16 @@
       "img": "https://imgproxy.ra.co/_/quality:66/aHR0cHM6Ly9zdGF0aWMucmEuY28vaW1hZ2VzL3Byb21vdGVyL3VzLWdyYXlhcmVhbnljLmpwZz9kYXRlVXBkYXRlZD0xNjUyODI1MDIzMTA3"
     },
     {
+      "name": "TheLab",
+      "commonName": "The Lab",
+      "website": "https://www.thelab.org/",
+      "region": "San Francisco",
+      "mapLink": "",
+      "latlng": "37.7653987, -122.4185028",
+      "desc": "Nonprofit experimental art and performance space located in San Francisco's Mission District.",
+      "img": "https://images.squarespace-cdn.com/content/v1/556101b3e4b0c18afa3f0a0f/1439684023223-6B1MXSJZFVOHYO21T4BU/The+Lab+logo+white+2+x+2.png"
+    },
+    {
       "name": "Knockout",
       "commonName": "Knockout",
       "website": "https://theknockoutsf.com/",
