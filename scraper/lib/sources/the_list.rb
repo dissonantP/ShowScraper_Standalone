@@ -101,6 +101,7 @@ class TheList
         "Masonic",
         "Paramount",
         "Fox Theater",
+        "F8",
         "Great Northern",
         "Public Works",
         "Kilowatt",
