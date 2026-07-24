@@ -62,19 +62,12 @@ class SweetwaterMusicHall
       date = parse_date(date_text, parse_show_time(time_text))
       return if title.blank? || date.to_date < Date.today
 
-      ticket = parse_ticket(event)
-
       {
         url: parse_url(event),
         img: event.at_css("img.eventListImage")&.attribute("src")&.value.to_s,
         date: date,
         title: title,
-        details: "",
-        age_rule: clean_text(event.at_css(".eventAgeRestriction")&.text),
-        doors: parse_doors(time_text),
-        show_time: parse_show_time(time_text),
-        ticket_status: ticket[:status],
-        ticket_url: ticket[:url]
+        details: ""
       }.
         tap { |data| Utils.print_event_preview(self, data) }.
         tap { |data| foreach_event_blk&.call(data) }
@@ -87,25 +80,8 @@ class SweetwaterMusicHall
         event.at_css(".eventMoreInfo a")&.attribute("href")&.value
     end
 
-    def parse_ticket(event)
-      link = event.css(".rhp-event-cta a").find do |anchor|
-        clean_text(anchor.text).present?
-      end
-      status = clean_text(link&.attribute("title")&.value.presence || link&.text)
-      href = link&.attribute("href")&.value.to_s
-
-      {
-        status: status,
-        url: href.match?(/\Ahttps?:\/\//) ? href : ""
-      }
-    end
-
     def parse_date(date_text, show_time)
       parse_pacific_time([date_text, show_time].reject(&:blank?).join(" "))
-    end
-
-    def parse_doors(time_text)
-      time_text[/Doors:\s*(.*?)(?:\s+Show:|\z)/i, 1].to_s.strip
     end
 
     def parse_show_time(time_text)
