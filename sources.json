@@ -560,6 +560,16 @@
       "img": "https://blackcatsf.com/wp-content/uploads/Downbeat-web-pic.png"
     },
     {
+      "name": "SweetwaterMusicHall",
+      "commonName": "Sweetwater Music Hall",
+      "website": "https://sweetwatermusichall.org/events/",
+      "region": "North Bay",
+      "mapLink": "",
+      "latlng": "37.9070164, -122.5481013",
+      "desc": "Historic Mill Valley nonprofit music venue and restaurant presenting touring artists, local acts, benefits, and community shows.",
+      "img": "https://sweetwatermusichall.org/wp-content/uploads/2021/04/SWEETWATER-LOGO-black.png"
+    },
+    {
       "name": "TheList",
       "commonName": "The List",
       "website": "http://www.foopee.com/punk/the-list/",

@@ -106,6 +106,11 @@ All sources are expected to emit hashes with:
 
 Validation of required keys happens in orchestrator callback before persistence.
 
+Source adapters must emit only the established event keys above. Agents must trace the
+normalization, persistence, and consumer contract before adding fields; do not invent
+source-specific keys just because a venue website exposes them. Adding a new event
+field requires an explicitly requested end-to-end schema and consumer change.
+
 ---
 
 ## Source Adapter Layer
